@@ -3628,6 +3628,7 @@ function renderJTableau(update, superlines, editor) {
             vnode("td", {
                 "class": "name",
                 contenteditable: superlineId != "0",
+                spellcheck: "false",
                 [VNODE_SUSPEND_CHILDREN]: focusedName,
                 onfocus: function(e) {
                     update(setFocus({
@@ -3877,6 +3878,7 @@ function renderDeltaTableau(update, deltas, focus, frozen) {
         return vnode("li", {
             "class": delta == null ? "tip " : "",
             contenteditable: "true",
+            spellcheck: "false",
             [VNODE_SUSPEND_CHILDREN]: focused,
             onmousedown: function(e) {
                 if (e.buttons == 4) {
