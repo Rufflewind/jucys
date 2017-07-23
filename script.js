@@ -3824,12 +3824,22 @@ function renderJTableau(update, superlines, editor) {
 function editDelta(deltaIndex, input) {
     return diagram => {
         const oldDeltas = diagram.deltas
+        let invalid = null
         diagram = Object.assign({}, diagram)
         diagram.deltas = oldDeltas.slice()
         diagram.deltas.splice(
             deltaIndex, 1,
             ...input.split(/[,;\n]/).map(delta =>
-                delta.split("=").map(s => s.trim()).filter(identity)))
+                delta.split("=").map(s => {
+                    s = s.trim()
+                    if (s && !isValidSuperlineId(s)) {
+                        invalid = s
+                    }
+                    return s
+                }).filter(identity)))
+        if (invalid != null) {
+            return "invalid label: " + invalid
+        }
         diagram.deltas = mergeDeltas(diagram.deltas)
         diagram.superlines = Object.assign({}, diagram.superlines)
         for (const delta of diagram.deltas) {
@@ -4122,7 +4132,7 @@ function newEditor() {
 
         // controls
         error: "",
-        notice: "Work in progress... please report any bugs you find!",
+        notice: "An editor for angular momentum diagrams",
         hover: {type: null},
         focus: {type: null},
         drag: {type: null},
