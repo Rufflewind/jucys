@@ -2010,7 +2010,7 @@ class DiagramLine {
         if (this.rawLine.direction == null) {
             return null
         }
-        return this.rawLine.direction * (this.reversed * 2 - 1)
+        return this.rawLine.direction * (1 - this.reversed * 2)
     }
 
     node(end) {
@@ -4467,6 +4467,9 @@ function updateTrack(event) {
 
 function isSuperlineOfLineUnique(diagram, lineId) {
     const line0 = diagram.lines[lineId]
+    if (line0.superline == "0") {
+        return false
+    }
     for (const [id, line] of Object.entries(diagram.lines)) {
         if (id != lineId &&
             line.superline == line0.superline) {
@@ -4477,7 +4480,8 @@ function isSuperlineOfLineUnique(diagram, lineId) {
 }
 
 function generateLoopSuperline(diagram, lineId) {
-    if (!isLoopLine(new Diagram(diagram).line(lineId))) {
+    let line = new Diagram(diagram).line(lineId)
+    if (!isLoopLine(line)) {
         return null
     }
     if (isSuperlineOfLineUnique(diagram, lineId)) {
@@ -4487,15 +4491,19 @@ function generateLoopSuperline(diagram, lineId) {
     diagram = Object.assign({}, diagram)
     const newLabel = availSuperlineLabels(diagram).next().value
     const oldLabel = diagram.lines[lineId].superline
-    const line = diagram.lines[lineId]
+    if (line.lineIndex(0) == 0
+        && line.lineIndex(1) == 2) {
+        line = line.reverse()
+    }
     diagram.lines = Object.assign({}, diagram.lines, {
-        [lineId]: Object.assign({}, line, {
-            direction: line.direction ? line.direction : +1,
+        [lineId]: Object.assign({}, diagram.lines[lineId], {
+            direction: line.reversed ? -1 : 1,
             superline: newLabel,
         })
     })
+    const phase = line.direction == -1 ? 2 : 0
     diagram.superlines = mergeSuperlineLists(diagram.superlines, {
-        [oldLabel]: ensureSuperline({weight: +1}),
+        [oldLabel]: ensureSuperline({weight: +1, phase: phase}),
         [newLabel]: ensureSuperline({weight: -1}),
     })
     return new Diagram(diagram).removeUnusedSuperlines().rawDiagram
