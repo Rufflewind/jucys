@@ -2726,6 +2726,9 @@ function loopElimRule(diagram, lineId, nodeIndex) {
     const otherNode = loop.cutLine.node(1)
     if (otherNode.type != "w3j") {
         diagram = deepClone(diagram.rawDiagram)
+        diagram.deltas = mergeDeltas(
+            diagram.deltas,
+            [[diagram.lines[loop.cutLine.id].superline, "0"]])
         diagram.lines[loop.cutLine.id].superline = "0"
         return diagram
     }
@@ -2739,6 +2742,9 @@ function loopElimRule(diagram, lineId, nodeIndex) {
     if (la.id == lb.id && !isLineDirectable(la.line)) {
         // other loop must be directed too if we want to eliminate it
         diagram = deepClone(diagram.rawDiagram)
+        diagram.deltas = mergeDeltas(
+            diagram.deltas,
+            [[diagram.lines[loop.cutLine.id].superline, "0"]])
         diagram.lines[loop.cutLine.id].superline = "0"
         return diagram
     }
