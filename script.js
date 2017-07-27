@@ -1737,12 +1737,14 @@ function joinTerminals(diagram, terminalIndex1, terminalIndex2) {
                              defaultCmp) > 0
                 ? reverseLine : identity
         newDiagram.lines[line1.id] = f(combined.line)
-        newDiagram.superlines[line1.superlineId] = mergeSuperlines(
-            line2.superline,
-            line1.superline,
-            {phase: combined.phase})
         line2.rawAssign(newDiagram, 1, line1.id)
-        newDiagram.superlines[line2.superlineId] = EMPTY_SUPERLINE
+        if (line1.superlineId != line2.superlineId) {
+            newDiagram.superlines[line1.superlineId] = mergeSuperlines(
+                line2.superline,
+                line1.superline,
+                {phase: combined.phase})
+            newDiagram.superlines[line2.superlineId] = EMPTY_SUPERLINE
+        }
         newDiagram.deltas = mergeDeltas(newDiagram.deltas, [combined.delta])
     }
     delete newDiagram.lines[line2.id]
