@@ -56,8 +56,17 @@ stack.yaml
 *.hi
 
 # JavaScript
+bower_components/
 node_modules/
 package-lock.json
+
+# PureScript
+generated-docs/
+output/
+.pulp-cache/
+.psc*
+.purs*
+.psa*
 
 # Python
 MANIFEST
