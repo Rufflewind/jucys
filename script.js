@@ -1,5 +1,7 @@
 "use strict"
 
+import diagramStylesheet from "./diagram.css"
+
 //////////////////////////////////////////////////////////////////////////////
 // Utility: Generic
 
@@ -919,6 +921,7 @@ class Vnode {
 
 const NAMESPACES = {
     svg: "http://www.w3.org/2000/svg",
+    xlink: "http://www.w3.org/1999/xlink",
 }
 
 function parseNamespace(name) {
@@ -3243,7 +3246,7 @@ function renderArrow(update, diagram, lineId, ambient) {
             y: -arrowHeadSize / 2,
             width: arrowHeadSize,
             height: arrowHeadSize,
-            transform: `translate(${position.x}, ${position.y}),`
+            transform: `translate(${position.x}, ${position.y}) `
                      + `rotate(${angle * 180 / Math.PI})`,
         }) : vnode("svg:circle", {
             "class": "arrowhead",
@@ -3269,11 +3272,16 @@ function renderLine(update, editor, lineId, ambient) {
     } else if (textOffset < 0 && textOffset > -minTextOffset) {
         textOffset = -minTextOffset
     }
-    const radius = info.arc.radius != Infinity ? Math.abs(info.arc.radius) : 0.0
-    const d = `M ${info.x0} ${info.y0} `
-            + `A ${radius} ${radius} 0 `
-            + `${Number(info.arc.large)} ${Number(info.arc.sweep)} `
-            + `${info.x1} ${info.y1}`
+    let d = `M ${info.x0} ${info.y0} `
+    if (info.arc.radius == Infinity) {
+        // don't make Inkscape sad
+        d += `L `
+    } else {
+        const radius = Math.abs(info.arc.radius)
+        d += `A ${radius} ${radius} 0 `
+           + `${Number(info.arc.large)} ${Number(info.arc.sweep)} `
+    }
+    d += `${info.x1} ${info.y1}`
     const textX = position.x + textOffset * position.normalX
     const textY = position.y + textOffset * position.normalY
     function onmousedown(e) {
@@ -4677,6 +4685,42 @@ function startDrag(x, y, flags, dragger) {
     }
 }
 
+function traverseElem(elem, f) {
+    if (!elem instanceof Element) {
+        return
+    }
+    f(elem)
+    let children = elem.children
+    for (const i of range(0, children.length)) {
+        traverseElem(children[i], f)
+    }
+}
+
+function applyStylesheet(stylesheet, elem) {
+    traverseElem(elem, elem => {
+        let style = []
+        for (const selector of Object.keys(stylesheet)) {
+            if (elem.matches(selector)) {
+                const rule = stylesheet[selector]
+                for (const prop of Object.keys(rule)) {
+                    const propName = prop.replace(/[A-Z]/g, c =>
+                        "-" + c.toLowerCase())
+                    if (filter(propName)) {
+                        style.push(propName + ": " + rule[prop])
+                    }
+                }
+            }
+        }
+        const inlineStyle = elem.getAttribute("style")
+        if (inlineStyle) {
+            style.push(inlineStyle)
+        }
+        if (style.length) {
+            elem.setAttribute("style", style.join("; "))
+        }
+    })
+}
+
 let prevKey
 function keyDown(e, editor) {
     const snapshot = editor.snapshot
@@ -4814,6 +4858,33 @@ function keyDown(e, editor) {
         return
     }
 
+    // save as SVG
+    if (getModifiers(e) == 0 && e.key == "s") {
+        const diagram = document.getElementById("diagram")
+        let svg = diagram.cloneNode(true)
+        const rect = diagram.getBoundingClientRect()
+        svg.setAttribute("viewBox", `0 0 ${rect.width} ${rect.height}`)
+        applyStylesheet(diagramStylesheet, svg)
+        // downgrade href attribute to the deprecated xlink:href
+        traverseElem(svg, elem => {
+            const href = elem.getAttribute("href")
+            if (href) {
+                elem.removeAttribute("href")
+                elem.setAttributeNS(NAMESPACES.xlink, "href", href)
+            }
+        })
+        const url = URL.createObjectURL(
+            new Blob([new XMLSerializer().serializeToString(svg)],
+                     {type: "image/svg+xml;charset=utf-8"}))
+        let a = document.createElement("a")
+        a.href = url
+        a.download = "diagram.svg"
+        document.getElementsByTagName("body")[0].appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+    }
+
     prevKey = e.key
 }
 
@@ -4837,3 +4908,5 @@ function main() {
     const update = getUpdate(editor)
     update(loadEditor)
 }
+
+main()

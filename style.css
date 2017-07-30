@@ -1,9 +1,6 @@
-* {
+:root {
     --two-j-color: #3274b0;
     --zero-color: #a89a9f;
-    --hover-color: rgba(227, 189, 46, 0.2);
-    --w3j-color: #21b0ae;
-    --w3j-flipped-color: #8d74c5;
     --sans: "Fira Sans", "Oxygen Sans", sans;
     --monospace: "Fira Mono", "Oxygen Mono", monospace;
 }
@@ -17,12 +14,31 @@ html, body {
     font-family: var(--sans);
 }
 
+a {
+    transition: color 0.3s;
+}
+
+a:link,
+a:visited {
+    color: #4a94eb;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #73b5fe;
+    text-decoration: underline;
+}
+
 h1 {
     font-size: large;
 }
 
 h1, p {
     margin: 5px;
+}
+
+svg {
+    isolation: isolate;
 }
 
 #notice:empty::before {
@@ -43,21 +59,6 @@ h1, p {
     background: white;
     border-radius: 2px;
     padding: 2px;
-}
-
-a {
-    transition: color 0.3s;
-}
-
-a:link,
-a:visited {
-    color: #4a94eb;
-    text-decoration: none;
-}
-
-a:hover {
-    color: #73b5fe;
-    text-decoration: underline;
 }
 
 #controls > #freeze {
@@ -213,10 +214,6 @@ body.frozen #help {
     width: 100%;
 }
 
-#version {
-    font-family: monospace;
-}
-
 #diagram,
 #tableau {
     cursor: default;
@@ -225,161 +222,6 @@ body.frozen #help {
 #tableau-wrapper .zero {
     color: var(--zero-color);
     font-weight: bold;
-}
-
-g.line.zero path.fg {
-    stroke: var(--zero-color);
-    font-weight: bold;
-}
-
-g.line.zero text.label {
-    fill: var(--zero-color);
-    font-weight: bold;
-}
-
-g.line.zero .arrowhead {
-    fill: var(--zero-color);
-    font-weight: bold;
-}
-
-g.line * {
-    transition: fill 0.3s, stroke 0.3s;
-}
-
-g.line path.bg,
-g.line path.fg,
-g.line path.hit {
-    fill: none;
-}
-
-g.line path.bg {
-    stroke: rgba(255, 255, 255, 0.7);
-    stroke-width: 10;
-    stroke-linecap: round;
-}
-
-g.line path.hit {
-    stroke: transparent;
-    stroke-width: 25;
-    stroke-linecap: round;
-}
-
-g.line:hover path.hit {
-    stroke: var(--hover-color);
-}
-
-g.arrow:hover circle.hit,
-g.node:hover circle.hit {
-    fill: var(--hover-color);
-}
-
-g.line path.fg {
-    stroke-width: 2;
-    stroke: #051308;
-}
-
-g.line path.pith {
-    fill: none;
-    stroke: none;
-}
-
-g.line.summed path.fg {
-    stroke-width: 6;
-}
-
-g.line.summed path.pith {
-    stroke: white;
-    stroke-width: 2;
-}
-
-g.line text.label {
-    fill: #051308;
-    alignment-baseline: middle;
-    text-anchor: middle;
-    font-size: large;
-}
-
-g.line.two-j text.label {
-    fill: var(--two-j-color);
-}
-
-g.line.two-j path.fg {
-    stroke: var(--two-j-color);
-}
-
-g.line.two-j .arrowhead {
-    fill: var(--two-j-color);
-}
-
-g.arrow.ambient .arrowhead {
-    opacity: 0.35;
-}
-
-g.arrow.bad .hit {
-    fill: #e74551;
-    opacity: 0.35;
-}
-
-g.arrow.bad .arrowhead {
-    fill: #e74551;
-}
-
-g.arrow.bad circle.arrowhead {
-    opacity: .7;
-}
-
-g.arrow circle.hit {
-    fill: transparent;
-}
-
-g.node * {
-    transition: fill 0.3s;
-}
-
-g.node circle {
-    fill: transparent;
-}
-
-g.node circle.fg {
-    fill: #ddd;
-}
-
-g.node text.label {
-    alignment-baseline: middle;
-    text-anchor: middle;
-    font-size: large;
-}
-
-g.node.w3j circle.fg {
-    fill: var(--w3j-color);
-}
-
-g.node.w3j circle.fg.flipped {
-    fill: var(--w3j-flipped-color);
-}
-
-g.node.w3j use.arrow {
-    fill: white;
-}
-
-g.node.w3j use.arrow.flipped {
-    transform: scale(-1,1);
-}
-
-g.node.terminal circle.fg {
-    fill: rgba(0, 0, 0, 0.3);
-}
-
-g.node.terminal:hover circle.fg {
-    fill: rgba(100, 100, 100, 0.3);
-}
-
-g.node.terminal circle.fg.frozen {
-    fill: transparent;
-}
-
-svg {
-    isolation: isolate;
 }
 
 #diagram-track {
