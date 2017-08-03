@@ -195,6 +195,7 @@ instance encodeJsonNode :: EncodeJson Node where
     (StrMap.fromFoldable
      [ Tuple "type" (encodeJson "terminal")
      , Tuple "lines" (encodeJson [line])
+     , Tuple "variable" (encodeJson variable)
      ])
   encodeJson (W3j {line1, line2, line3}) =
     encodeJson
