@@ -3524,9 +3524,69 @@ function cmpSuperlineId(x, y) {
     return d
 }
 
+const GREEK_LETTERS = "ΑαΒβΓγΔδΕεϵΖζΗηΘθϑΙιΚκϰΛλΜμΝνΞξΟοΠπϖΡρϱΣσςΤτΥϒυΦφϕΧχΨψΩω"
+const GREEK_LATEX = {
+    "Α": "A",
+    "α": "\\alpha",
+    "Β": "B",
+    "β": "\\beta",
+    "Γ": "\\Gamma",
+    "γ": "\\gamma",
+    "Δ": "\\Delta",
+    "δ": "\\delta",
+    "Ε": "E",
+    "ε": "\\varepsilon",
+    "ϵ": "\\epsilon",
+    "Ζ": "Z",
+    "ζ": "\\zeta",
+    "Η": "H",
+    "η": "\\eta",
+    "Θ": "\\Theta",
+    "θ": "\\theta",
+    "ϑ": "\\vartheta",
+    "Ι": "I",
+    "ι": "\\iota",
+    "Κ": "K",
+    "κ": "\\kappa",
+    "ϰ": "\\varkappa",
+    "Λ": "\\Lambda",
+    "λ": "\\lambda",
+    "Μ": "M",
+    "μ": "\\mu",
+    "Ν": "N",
+    "ν": "\\nu",
+    "Ξ": "\\Xi",
+    "ξ": "\\xi",
+    "Ο": "O",
+    "ο": "o",
+    "Π": "\\Pi",
+    "π": "\\pi",
+    "ϖ": "\\varpi",
+    "Ρ": "P",
+    "ρ": "\\rho",
+    "ϱ": "\\varrho",
+    "Σ": "\\Sigma",
+    "σ": "\\sigma",
+    "ς": "\\varsigma",
+    "Τ": "T",
+    "τ": "\\tau",
+    "Υ": "Y",
+    "ϒ": "\\Upsilon",
+    "υ": "\\upsilon",
+    "Φ": "\\Phi",
+    "φ": "\\varphi",
+    "ϕ": "\\phi",
+    "Χ": "X",
+    "χ": "\\chi",
+    "Ψ": "\\Psi",
+    "ψ": "\\psi",
+    "Ω": "\\Omega",
+    "ω": "\\omega",
+}
+
 function isValidSuperlineId(superlineId) {
     // prevent exotic characters from messing up the delta input syntax
-    return !!/^[\w_.]+$/.exec(superlineId)
+    return !!new RegExp(`^['′_.,\\w${GREEK_LETTERS}]+$`).exec(superlineId)
 }
 
 function isLoopLine(line) {
@@ -3911,7 +3971,11 @@ function renderVariable(type, name) {
     if (type == "j" && name == "0") {
         return "0"
     }
-    return `${type}_{\\text{${name}}}`
+    name = name.replace("′", "'")
+               .replace("_", "\\_")
+               .replace(new RegExp(`[${GREEK_LETTERS}]`),
+                        x => GREEK_LATEX[x] + " ")
+    return `${type}_{${name}}`
 }
 
 function renderEquationLine(diagram, nodeIndex, lineIndex, summedVars) {
@@ -4004,26 +4068,27 @@ function renderEquation(diagram, container) {
     let weights = ""
     Object.keys(diagram.superlines).forEach(function(superlineId) {
         const superline = diagram.superlines[superlineId]
+        const jVar = renderVariable("j", superlineId)
         switch (mod(superline.phase, 4)) {
             case 0:
                 break
             case 1:
-                phases.push(`+ j_{${superlineId}}`)
+                phases.push(`+ ${jVar}`)
                 break
             case 2:
-                phases.push(`+ 2 j_{${superlineId}}`)
+                phases.push(`+ 2 ${jVar}`)
                 break
             case 3:
-                phases.push(`- j_{${superlineId}}`)
+                phases.push(`- ${jVar}`)
                 break
         }
         if (superline.weight == 0) {
         } else if (superline.weight == 2) {
-            weights += ` (2 j_{${superlineId}} + 1)`
+            weights += ` (2 ${jVar} + 1)`
         } else if (superline.weight % 2 == 0) {
-            weights += ` (2 j_{${superlineId}} + 1)^{${superline.weight / 2}}`
+            weights += ` (2 ${jVar} + 1)^{${superline.weight / 2}}`
         } else {
-            weights += ` (2 j_{${superlineId}} + 1)^{${superline.weight} / 2}`
+            weights += ` (2 ${jVar} + 1)^{${superline.weight} / 2}`
         }
     })
     Object.keys(diagram.lines).forEach(function(lineId) {
