@@ -1654,28 +1654,13 @@ function w3jOrientation(diagram, nodeIndex) {
     }
     const lines = node
         .lines
-        .filter(x => x != "0")
         .map((_, lineIndex) => {
             const angle = lineAngle(diagram, nodeIndex, lineIndex)
             return [lineIndex, mod(angle, 2 * Math.PI)]
         })
         .sort((line1, line2) => line1[1] - line2[1])
         .map(([x, _]) => x)
-    switch (lines.length) {
-        case 3:
-            return {
-                nnz: lines.length,
-                orientation: permutSign([0, 1, 2], lines),
-            }
-        case 2:
-            const s = node.lines.indexOf("0") == 1 ? -1 : 1
-            return {
-                nnz: lines.length,
-                orientation: permutSign([0, 1], lines) * s,
-            }
-        default:
-            return {nnz: lines.length}
-    }
+    return permutSign([0, 1, 2], lines)
 }
 
 function mergeDiagrams(diagram1, diagram2) {
@@ -3415,32 +3400,28 @@ function renderNode(update, editor, nodeIndex, frozen) {
 
     if (node.type == "w3j") {
         const circularArrowSize = 30
-        const orientationInfo = w3jOrientation(diagram, nodeIndex)
-        if (orientationInfo.nnz == 3) {
-            const orientation = orientationInfo.orientation > 0 ? "flipped " : ""
-            gChildren.push(vnode("svg:circle", {
-                "class": "bg " + orientation,
-                r: 20,
-            }))
-            gChildren.push(vnode("svg:circle", {
-                "class": "fg " + orientation,
-                r: 18,
-            }))
-            gChildren.push(vnode("svg:circle", {
-                "class": "hit " + orientation,
-                r: 25,
-            }))
-            gChildren.push(vnode("svg:use", {
-                "class": "arrow " + orientation,
-                href: "#clockwise",
-                x: -circularArrowSize / 2,
-                y: -circularArrowSize / 2,
-                width: circularArrowSize,
-                height: circularArrowSize,
-            }))
-        } else {
-            throw new Error("degenerate Wigner 3-jm nodes are not yet implemented")
-        }
+        const orientation = w3jOrientation(diagram, nodeIndex) > 0
+                          ? "flipped " : ""
+        gChildren.push(vnode("svg:circle", {
+            "class": "bg " + orientation,
+            r: 20,
+        }))
+        gChildren.push(vnode("svg:circle", {
+            "class": "fg " + orientation,
+            r: 18,
+        }))
+        gChildren.push(vnode("svg:circle", {
+            "class": "hit " + orientation,
+            r: 25,
+        }))
+        gChildren.push(vnode("svg:use", {
+            "class": "arrow " + orientation,
+            href: "#clockwise",
+            x: -circularArrowSize / 2,
+            y: -circularArrowSize / 2,
+            width: circularArrowSize,
+            height: circularArrowSize,
+        }))
 
     } else if (node.type == "terminal") {
         const frozenClass = frozen ? "frozen " : ""
@@ -3927,7 +3908,7 @@ function renderDeltaTableau(update, deltas, focus, frozen) {
 }
 
 function renderVariable(type, name) {
-    if (name == "0") {
+    if (type == "j" && name == "0") {
         return "0"
     }
     return `${type}_{\\text{${name}}}`
