@@ -46,16 +46,21 @@ mainUI =
   render state =
     HH.main
     []
-    [ HH.textarea
+    [ HH.h1_
+      [ HH.text "Diagram input tool" ]
+    , HH.textarea
       [ HP.id_ "input"
       , HP.value state.input
       , HE.onValueInput (HE.input ValueInput) ]
-    , HH.a
-      [ HP.href ("https://rufflewind.com/jucys" <> state.link) ]
-      [ HH.text state.link ]
-    , HH.div
-      [ HP.class_ (HH.ClassName "error") ]
-      [ HH.text state.error ]
+    , if state.error == ""
+      then
+        HH.a
+        [ HP.href (".." <> state.link) ]
+        [ HH.text "[Show diagram]" ]
+      else
+        HH.div
+        [ HP.class_ (HH.ClassName "error") ]
+        [ HH.text (if state.error == "" then "\xa0" else state.error)]
     ]
 
   eval :: Query ~> H.ComponentDSL MainState Query Void (Aff (HE' eff))
