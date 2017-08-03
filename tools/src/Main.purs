@@ -1,6 +1,7 @@
 module Main where
 import Common
 import Control.Monad.Aff (Aff)
+import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import Control.Monad.State as State
 import DOM (DOM)
 import DOM.HTML (window)
@@ -86,3 +87,6 @@ mainUI =
 
 main :: Eff (HE' ()) Unit
 main = HA.runHalogenAff (HA.awaitBody >>= runUI mainUI unit)
+
+_main :: Unit
+_main = unsafePerformEff main

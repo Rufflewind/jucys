@@ -1,25 +1,21 @@
-all: build build-tools
+all: build
 
 clean:
-	rm -fr dist
+	rm -fr dist tools/output
 
 build: dist/help.html node_modules
-	node_modules/webpack/bin/webpack.js
+	npm run build
 
 dist/help.html: README.md
 	mkdir $(@D)
 	pandoc README.md -o $@
 
-build-tools:
-	cd tools && $(MAKE) build
-	mkdir -p dist/tools
-	ln -f tools/*.{css,html} tools/output/app.js dist/tools
-
 serve: node_modules
-	node_modules/webpack-dev-server/bin/webpack-dev-server.js
+	npm run serve
 
 doc:
 	esdoc
+	cd jucys && pulp docs -- --format html
 
 deploy: dist/.git/config all
 	cd $(<D)/.. && \

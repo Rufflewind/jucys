@@ -1,9 +1,12 @@
 module.exports = {
     devtool: "source-map",
-    entry: "./script.js",
+    entry: {
+        "script": "./script.js",
+        "tools/script": "./tools/src/Main.purs"
+    },
     output: {
         path: __dirname + "/dist",
-        filename: "script.js",
+        filename: "[name].js",
     },
     module: {
         rules: [
@@ -16,20 +19,37 @@ module.exports = {
                         options: {
                             stringifier: "../../../stringify",
                             plugins: [require("postcss-cssnext")]
-                        }
-                    }
-                ]
-            }
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.purs$/,
+                use: [
+                    {
+                        loader: "purs-loader",
+                        options: {
+                            src: [
+                                "tools/bower_components/purescript-*/src/**/*.purs",
+                                "tools/src/**/*.purs",
+                            ],
+                            output: "tools/output",
+                        },
+                    },
+                ],
+            },
         ]
     },
     plugins: [
         new (require("copy-webpack-plugin"))([
             {from: "*.css"},
             {from: "*.html"},
-            {from: "*.png"}
-        ])
+            {from: "*.png"},
+            {from: "tools/*.css"},
+            {from: "tools/*.html"},
+        ]),
     ],
     devServer: {
         contentBase: __dirname + "/dist",
-    }
+    },
 }

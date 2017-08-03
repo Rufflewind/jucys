@@ -2,11 +2,16 @@
   "name": "jucys",
   "version": "0.1.0",
   "dependencies": {},
+  "scripts": {
+    "build": "webpack",
+    "serve": "webpack-dev-server --hot"
+  },
   "devDependencies": {
     "copy-webpack-plugin": "^4.0.1",
     "postcss-cssnext": "^3.0.2",
     "postcss-js": "^1.0.0",
     "postcss-loader": "^2.0.6",
+    "purs-loader": "^3.0.0",
     "webpack": "^3.4.1",
     "webpack-dev-server": "^2.6.1"
   }
