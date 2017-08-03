@@ -5,6 +5,8 @@
     --hover-opacity: 0.2;
     --w3j-color: #21b0ae;
     --w3j-flipped-color: #8d74c5;
+    --bad-color: #e74551;
+    --bad-external-color: #dcb406;
 }
 
 g.line.zero path.fg {
@@ -98,13 +100,13 @@ g.arrow.ambient .arrowhead {
     opacity: 0.35;
 }
 
-g.arrow.bad .hit {
-    fill: #e74551;
-    opacity: 0.35;
+g.arrow.bad .hit,
+g.arrow.bad .arrowhead {
+    fill: var(--bad-color);
 }
 
-g.arrow.bad .arrowhead {
-    fill: #e74551;
+g.arrow.bad.external .arrowhead {
+    fill: var(--bad-external-color);
 }
 
 g.arrow.bad circle.arrowhead {

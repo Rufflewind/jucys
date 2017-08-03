@@ -1379,11 +1379,11 @@ function getLineInfoBetween(x0, y0, x1, y1, line) {
 function getLineInfo(diagram, lineId) {
     const line = diagram.lines[lineId]
     const ends = endNodeIndices(diagram.nodes, lineId)
-    let x0 = diagram.nodes[ends[0]].x
-    let y0 = diagram.nodes[ends[0]].y
-    let x1 = diagram.nodes[ends[1]].x
-    let y1 = diagram.nodes[ends[1]].y
-    return getLineInfoBetween(x0, y0, x1, y1, line)
+    const node0 = diagram.nodes[ends[0]]
+    const node1 = diagram.nodes[ends[1]]
+    return Object.assign({
+        external: [node0.type, node1.type].includes("terminal"),
+    }, getLineInfoBetween(node0.x, node0.y, node1.x, node1.y, line))
 }
 
 /** Find the closest "pos" on a line. */
@@ -2814,7 +2814,7 @@ function loopIntroRule(diagram, lineId, xy1, xy2) {
     }).rawDiagram
 }
 
-function w3jIntroRule(diagram, lineId1, lineId2, reversed) {
+function w3jIntroRule(diagram, lineId1, lineId2, reversed, diagonal) {
     diagram = new Diagram(diagram)
     let line1 = diagram.line(lineId1)
     let line2 = diagram.line(lineId2)
@@ -2856,9 +2856,9 @@ function w3jIntroRule(diagram, lineId1, lineId2, reversed) {
             w3jNode("$2", "$4", "$5", ...xy2),
         ],
         lines: {
-            $1: {superline: line1.superlineId, direction: 0,
+            $1: {superline: line1.superlineId, direction: Number(diagonal),
                  arcHeight: -arcHeight1},
-            $2: {superline: line1.superlineId, direction: 0,
+            $2: {superline: line1.superlineId, direction: Number(diagonal),
                  arcHeight: -arcHeight2},
             $3: {superline: line2.superlineId, direction: 0,
                  arcHeight: arcHeight1},
@@ -2937,7 +2937,7 @@ function w3jElimRule(diagram, lineId) {
     }).rawDiagram
 }
 
-function getAmbientDirections(diagram) {
+function getAmbientDirections(diagram, ignoreExternal) {
     // lines we don't care about:
     // - external lines with no pre-existing direction
     // - zero lines
@@ -2947,9 +2947,8 @@ function getAmbientDirections(diagram) {
     let directions = new RealSparseVector()
     for (const line of diagram.lines()) {
         if (line.superlineId != "0") {
-            if ((line.node(0).type == "terminal"
-                || line.node(1).type == "terminal")
-                && line.direction % 2 == 0) {
+            if ([line.node(0).type, line.node(1).type].includes("terminal")
+                && (ignoreExternal || line.direction % 2 == 0)) {
                 excludedLineIds.push(line.id)
             }
             directions.set(line.id, 1 - mod(line.direction, 2))
@@ -3037,7 +3036,7 @@ function subdiagramOrientability(line0) {
     diagram.lines[line0.id] = Object.assign({}, diagram.lines[line0.id], {
         superline: "0",
     })
-    const ambient = getAmbientDirections(new Diagram(diagram))
+    const ambient = getAmbientDirections(new Diagram(diagram), true)
     if (!ambient.orientable) {
         return {
             error: "diagram is non-orientable",
@@ -3191,6 +3190,7 @@ function renderArrow(update, diagram, lineId, ambient) {
         {
             "class": "arrow "
                    + (!line.direction ? "ambient " : "")
+                   + (info.external ? "external " : "")
                    + (bad ? "bad " : ""),
             onmousedown: function(e) {
                 if (e.buttons == 1) {
@@ -4238,8 +4238,16 @@ function toSvgCoords(p) {
 
 function renderEditor(update, editor) {
     const diagram = editor.snapshot.diagram
-    const ambient = editor.snapshot.showAmbient
-                 && getAmbientDirections(new Diagram(diagram))
+    let ambient = null
+    if (editor.snapshot.showAmbient) {
+        // first try to match external lines (not needed, but looks nicer)
+        ambient = getAmbientDirections(new Diagram(diagram), false)
+        if (!ambient.orientable) {
+            // if it's not orientable, it might be because the external-line
+            // constraints aren't satisfiable
+            ambient = getAmbientDirections(new Diagram(diagram), true)
+        }
+    }
     return [
         {
             element: window,
@@ -4652,11 +4660,27 @@ function finishTrack(editor, event) {
                         cutRule(diagram, editor.trackStart.lineId,
                                 startXy, stopXy))(editor)
                 } else {
-                    modifyDiagram({equivalent: true, clearHover: true}, diagram =>
-                        w3jIntroRule(diagram,
-                                     editor.trackStart.lineId,
-                                     editor.trackStop.lineId,
-                                     event.shiftKey))(editor)
+                    modifyDiagram({
+                        equivalent: true,
+                        clearHover: true,
+                    }, diagram => {
+                        // prefer orientable diagrams
+                        let candidateDiagram
+                        for (const diagonal of [false, true]) {
+                            candidateDiagram =
+                                w3jIntroRule(diagram,
+                                             editor.trackStart.lineId,
+                                             editor.trackStop.lineId,
+                                             event.shiftKey,
+                                             diagonal)
+                            const ambient = getAmbientDirections(
+                                new Diagram(candidateDiagram), true)
+                            if (ambient.orientable) {
+                                return candidateDiagram
+                            }
+                        }
+                        return candidateDiagram
+                    })(editor)
                 }
             } else if (editor.trackStop.type == "node") {
                 modifyDiagram({equivalent: true, clearHover: true}, diagram =>
