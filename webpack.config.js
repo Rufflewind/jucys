@@ -11,6 +11,10 @@ module.exports = {
     module: {
         rules: [
             {
+                test: /\.js$/,
+                use: ["source-map-loader"],
+            },
+            {
                 test: /\.css$/,
                 use: [
                     "json-loader",
@@ -34,6 +38,7 @@ module.exports = {
                                 "tools/src/**/*.purs",
                             ],
                             output: "tools/output",
+                            watch: true,
                         },
                     },
                 ],

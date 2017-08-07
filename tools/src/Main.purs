@@ -14,13 +14,14 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.VDom.Driver (runUI)
+import Utils as U
 
 type HE' eff = HA.HalogenEffects (console :: CONSOLE, dom :: DOM | eff)
 
 type MainState = { input :: String, link :: String, error :: String }
 
 initialState :: MainState
-initialState = { input: "", link: "#", error: "" }
+initialState = { input: "", link: "", error: "" }
 
 data Query a
   = UpdateLink a
@@ -79,16 +80,29 @@ mainUI =
       eval (UpdateLink next)
     UpdateLink next -> do
       state <- State.get
-      result <- liftEff (Diagram.encodeDiagram state.input)
-      case result of
-        Left error -> State.put state { error = if error == ""
-                                                then "unknown error"
-                                                else error }
-        Right link -> State.put state { link = link, error = "" }
+      case Diagram.parseSubdiagrams state.input >>=
+           Diagram.constructSubdiagrams of
+        Left error -> do
+          State.put state
+            { error = if error == ""
+                      then "unspecified error"
+                      else error }
+        Right diagram -> do
+          State.put state
+            { error = ""
+            , link = Diagram.snapshotHash (Diagram.newFrozenSnapshot diagram)
+            }
       pure next
 
   defaultInput =
-    """# syntax: w3j|wet|cgp|cgm <j1> <j2> <j3>\n"""
+    U.dropFirstChar """
+# syntax:
+#
+#   w3j|wet <j> <j> <j>
+#   rec <j> <j>
+#
+# where <j> = <j-var> | <j> ± <j> | ±<j>
+"""
 
 main :: Eff (HE' ()) Unit
 main = HA.runHalogenAff (HA.awaitBody >>= runUI mainUI unit)

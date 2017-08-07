@@ -13,9 +13,13 @@ dist/help.html: README.md
 serve: node_modules
 	npm run serve
 
-doc:
+doc: esdoc pursdoc
+
+esdoc:
 	esdoc
-	cd jucys && pulp docs -- --format html
+
+pursdoc:
+	cd tools && pulp docs -- --format html
 
 deploy: dist/.git/config all
 	cd $(<D)/.. && \

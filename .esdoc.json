@@ -1,6 +1,6 @@
 {
     "source": ".",
     "destination": "doc",
-    "excludes": ["^doc"],
+    "excludes": ["^dist", "^doc", "^node_modules", "^tools"],
     "unexportIdentifier": true
 }

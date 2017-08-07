@@ -2718,6 +2718,7 @@ function loopElimRule(diagram, lineId, nodeIndex) {
             diagram.deltas,
             [[diagram.lines[loop.cutLine.id].superline, "0"]])
         diagram.lines[loop.cutLine.id].superline = "0"
+        diagram.superlines["0"] = EMPTY_SUPERLINE
         return diagram
     }
     if (otherNode.index != nodeIndex && loopNode.index != nodeIndex) {
@@ -2734,6 +2735,7 @@ function loopElimRule(diagram, lineId, nodeIndex) {
             diagram.deltas,
             [[diagram.lines[loop.cutLine.id].superline, "0"]])
         diagram.lines[loop.cutLine.id].superline = "0"
+        diagram.superlines["0"] = EMPTY_SUPERLINE
         return diagram
     }
     const md = ld.toString()
@@ -3524,7 +3526,6 @@ function cmpSuperlineId(x, y) {
     return d
 }
 
-const GREEK_LETTERS = "ΑαΒβΓγΔδΕεϵΖζΗηΘθϑΙιΚκϰΛλΜμΝνΞξΟοΠπϖΡρϱΣσςΤτΥϒυΦφϕΧχΨψΩω"
 const GREEK_LATEX = {
     "Α": "A",
     "α": "\\alpha",
@@ -3583,10 +3584,12 @@ const GREEK_LATEX = {
     "Ω": "\\Omega",
     "ω": "\\omega",
 }
+const GREEK_LETTERS = "ΑαΒβΓγΔδΕεϵΖζΗηΘθϑΙιΚκϰΛλΜμΝνΞξΟοΠπϖΡρϱΣσςΤτΥϒυΦφϕΧχΨψΩω"
+const IDENT_CHAR_REGEX = `['′_.,\\w${GREEK_LETTERS}]`
 
 function isValidSuperlineId(superlineId) {
     // prevent exotic characters from messing up the delta input syntax
-    return !!new RegExp(`^['′_.,\\w${GREEK_LETTERS}]+$`).exec(superlineId)
+    return !!new RegExp(`^${IDENT_CHAR_REGEX}+$`).exec(superlineId)
 }
 
 function isLoopLine(line) {
