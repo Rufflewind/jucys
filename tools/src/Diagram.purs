@@ -1333,16 +1333,15 @@ parseAngMomentum = fix \p ->
       PC.between (parseTokenIs (Left "("))
                  (parseTokenIs (Left ")"))
                  (parseAngMomentumExpr p)
+  <|> parseTokenIs (Left "+") *> parseAngMomentum
+  <|> parseTokenIs (Left "-") *> (JNeg <$> parseAngMomentum)
   <|> J <$> parseToken (_ ^? _Right)
   <|> unexpectedToken "expected variable"
 
 parseAngMomentumExpr :: Parser AngMomentum -> Parser AngMomentum
 parseAngMomentumExpr =
   PE.buildExprParser
-  [ [ PE.Prefix (id <$ parseTokenIs (Left "+"))
-    , PE.Prefix (JNeg <$ parseTokenIs (Left "-"))
-    ]
-  , [ PE.Infix (JCg <$ parseTokenIs (Left "+")) PE.AssocLeft
+  [ [ PE.Infix (JCg <$ parseTokenIs (Left "+")) PE.AssocLeft
     , PE.Infix ((\x y -> JCg x (JNeg y)) <$ parseTokenIs (Left "-"))
                PE.AssocLeft
     ]
