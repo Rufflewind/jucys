@@ -9,19 +9,94 @@
 </tr>
 </table>
 
-The essential features of the tool have been implemented, but it’s not been thoroughly tested.  The user interface is rather clunky and the source code is a total mess because it written in a hurry over two weeks.  (Doesn’t help that it was partly an experiment to see how much of JS could be squeezed into a single file without sanity loss.)
+The essential features of the tool have been implemented, but it’s not been thoroughly tested.  The user interface is rather clunky and the source code quite messy and incoherent.
 
-The implementation here isn't completely faithful to Jucys’ original presentation.  In particular, arrows are *not* interpreted as variances, but simply as phase factors.  Fortunately, the net effect of this change is quite minor and translation to and from conventional Jucys diagrams is nearly trivial.  See § Interpretation.
+The implementation here isn’t completely faithful to Jucys’ original presentation.  In particular, arrows are *not* interpreted as variances, but simply as phase factors.  Fortunately, the net effect of this change is quite minor and translation to and from conventional Jucys diagrams is nearly trivial.  See § Interpretation.
 
 ## Running the tool
 
-You can try it out here: https://rufflewind.com/jucys
+You can try it out here: <https://rufflewind.com/jucys>
 
 It’s a client-side web application written in JavaScript that runs entirely in your own browser.  You don’t even need a server to run it!
 
-The implementation makes extensive use of [ES2016](https://en.wikipedia.org/wiki/ECMAScript#7th_Edition_-_ECMAScript_2016) and SVG, so you’ll need a pretty modern browser to run.  It has been tested on Chromium and Firefox.  It may or may not work on Safari or Edge, and most likely won’t work on IE.  There’s no support for mobile platforms, sorry.  You need a working mouse with a scroll-wheel button (middle button).
+The implementation makes extensive use of [ES2016](https://en.wikipedia.org/wiki/ECMAScript#7th_Edition_-_ECMAScript_2016) and SVG, so you’ll need a pretty modern browser to run it.  It has been tested on Chromium and Firefox.  It may or may not work on Safari or Edge, and most likely won’t work on IE.  There’s no support for mobile platforms, sorry.  You’ll need a working mouse with a scroll-wheel button (middle button).
+
+If you want to run it on your own computer or web server, you’ll have to build the source code by running `make`.  You’ll need:
+
+  - Some flavor of [Make](https://en.wikipedia.org/wiki/Make_(software))
+  - [npm](https://npmjs.com)
+  - [Bower](https://bower.io)
+  - [Pandoc](https://pandoc.org)
+  - [PureScript](http://purescript.org)
+  - [Pulp](https://github.com/purescript-contrib/pulp)
+
+as well as all the dependencies listed in `package.json` and `tools/bower.json`, which are installed using `npm` and `bower` respectively.  The output is written to the `dist` directory.
 
 ## Usage
+
+### Input
+
+There are two ways to create a diagram: you can either draw it manually using the diagram editor, or specify them as text using the *diagram input tool* (<https://rufflewind.com/jucys/tools>).  The input tool is faster, but more limited in what it can do.
+
+The syntax of the input tool is as follows:
+
+  - Every line of input corresponds to a collection of angular momenta that sums to *zero*.  In other words, it means every line of input corresponds to either a spherical tensor matrix element coupled using the Wigner–Eckart theorem, or an overlap between two angular momentum states.
+  - Clebsch–Gordan coupling is written using plus and minus signs just like in kindergarten.
+  - Variables that are the same up to primes/apostrophes are implicitly summed over (only the <code><var>m</var></code>s, not <code><var>j</var></code>s).
+  - Comments are prefixed by `#` like in Python or Bash.
+
+Note that diagrams created by the input tool always start off in the *reduction mode* of the editor, which means you can do algebraic manipulations that preserve equivalence, but if you want to break equivalence you have to exit that mode.  See the documentation on the editor for more information.
+
+#### Example 1: Recoupling coefficient for (12)3 ↔ 1(23)
+
+For example, say you want to look at the textbook example of the recoupling coefficient:
+
+    ⟨ (a b) c | a (b c) ⟩
+
+This translates to the following input:
+
+    rec ((a + b) + c) (a + (b + c))
+
+Type that in and click the “Show diagram” button.  After a little bit of manipulation you’ll see it corresponds to a 6-j symbol (a.k.a. tetrahedral graph/K<sub>4</sub>/W<sub>4</sub>) up to phases and weights.
+
+Note that the input editor does *not* specify which <code><var>j</var></code>s to sum over.  It can’t, because it has no clue which is the source coupling and which is the destination coupling you want.  In any case, it’s easy to tell what needs to be summed over, because those are always the <code><var>j</var></code>s that don’t show up on the other side of the equation!
+
+The plus signs are important: they indicate that the angular momenta are covariant with respect to each other.  If you want to couple a normal angular momentum with a *time-reversed* angular momentum, then you have to write `a - b` instead.  “Negation” as far as the input tool is concerned just means the insertion of a metric tensor <code>(−1)<sup><var>j</var> − <var>m</var></sup> δ<sub><var>m</var>, −<var>m</var>′</sub></code>.  Negating twice doesn’t give you the exact same angular momentum back; instead it accumulates a phase of <code>(−1)<sup>2 <var>j</var></sup></code>.  The ordering is important too: `a + b` and `b + a` aren’t quite the same: they are different up to a phase factor.
+
+What `rec` does is actually pretty dumb: it just connects the total angular momenta of both sides together, and then divides by <code>(2 <var>j</var><sub>total</sub> + 1)</code>.
+
+#### Example 2: Pandya transform (12)k(34) ↔ (14)k(32)
+
+Reduced matrix elements of spherical tensors is written using `wet`.  Here, the Wigner–Eckart coupling convention of Wigner, Racah, and many others is used:
+
+<pre><code>⟨<var>j</var><sub>a</sub> <var>m</var><sub>a</sub>|<var>T</var><sup><var>k</var></sup><sub><var>q</var></sub>|<var>j</var><sub>b</sub> <var>m</var><sub>b</sub>⟩ = (−1)<sup><var>j</var><sub>a</sub> − <var>m</var><sub>a</sub></sup> (<var>j</var><sub>a</sub> <var>m</var><sub>a</sub> <var>k</var> <var>q</var> <var>j</var><sub>b</sub> <var>m</var><sub>b</sub>) ⟨<var>j</var><sub>a</sub>‖<var>T</var><sup><var>k</var></sup><sub></sub>‖<var>j</var><sub>b</sub>⟩</code></pre>
+
+For example, say you want to derive the transformation between ordinary two-body matrix elements and Pandya matrix elements:
+
+    ⟨ a b ‖ k ‖ c d ⟩ ↔ ⟨ a −d ‖ k ‖ c −b ⟩
+
+Here, `k` denotes the spherical tensor rank and the minus sign indicates time-reversal.  To input this, you write each matrix element on its own line, coupled with `wet`:
+
+    wet (a + b) k (c + d)
+    wet (a - d) k (c - b)
+
+The ordering of lines doesn’t matter, because recoupling coefficients are real and symmetric!  You’ll see right away that this is a 9-j symbol (a.k.a. utility graph/Thomsen graph/K<sub>3,3</sub>).
+
+If you want to look at just scalar coupling, then you just need to replace `k` with `0` (either in the diagram input or diagram editor).  After a bit of manipulation, you’ll get essentially a 6-j symbol up to Kronecker deltas, phases, and weights.
+
+#### Example 3: A tensor product
+
+Without motivating why we care about tensor products, suppose you want to calculate the Clebsch–Gordan coupled product:
+
+    ⟨ p | C | q ⟩ = ∑[i a b] ⟨ A B | C ⟩ ⟨ i p | A | a b ⟩ ⟨ a b | B | i q ⟩
+
+The corresponding input would be
+
+    wet (i+p) A (a+b)
+    wet (a+b) B (i+q)
+    wet p (A+B) q
+
+After some simplifications, you should get two 6-j symbols, plus a triangular delta.
 
 ### Layout
 
@@ -47,6 +122,14 @@ This used to be a feature early on, but it was quickly removed because you can a
 
 Every change to the diagram automatically updates the URL, so you can even “save” diagrams by bookmarking the URL.  You can also send it to other people.  (The URL can get really long though!)
 
+### General controls
+
+  - A general rule of thumb is that left-click usually does something fairly harmless (e.g. moving things around).
+  - Right-click and middle-click are used to perform modifications on various parts of the diagram (especially reductions).  Right and middle buttons are also used for dragging, with meaning that’s dependent on context.
+  - Pressing Ctrl while moving an object snaps the object to a grid.
+
+The remaining key and mouse bindings are specified in the following sections on Editing mode and Reduction mode.
+
 ### Editing mode
 
 - <kbd>w</kbd>: Create a Wigner 3-jm symbol at the location of your cursor.
@@ -55,17 +138,18 @@ Every change to the diagram automatically updates the URL, so you can even “sa
 - <kbd>x</kbd>: Delete a node or a free line (can be indirectly used to detach lines).
 - <kbd>v</kbd>: Toggle the visibility of ambient arrows (see § Orientable diagrams).
 - <kbd>f</kbd>: Switch between editing mode and reduction (frozen) mode.
-- <kbd>r</kbd>: Reset and clear the entire diagram (if you encounter a bug in the app and <kbd>r</kbd> doesn't work, you can still click on this button to reset).
+- <kbd>s</kbd>: Save the diagram as an SVG image.
+- <kbd>r</kbd>: Reset and clear the entire diagram (if you encounter a bug in the app and <kbd>r</kbd> doesn’t work, you can still click on this button to reset).
 - <kbd>Right-click</kbd> on a line to add/flip/remove the arrow.  Unlike in reduction mode, this does not alter the phase at all.
 - <kbd>Middle-click</kbd> on a line to change its <code><var>j</var></code> to a fresh value.
 
-The tableau is editable too: you can click on things, drag phases and weights around, etc.  Some of these modifications are still available (albeit more restricted) while frozen.
+The tableau is editable too: you can left/middle/right click on things, drag phases and weights around, etc.  Some of these modifications are still available (albeit more restricted) while frozen.
 
 ### Reduction (“frozen”) mode
 
 Rules preserve the meaning of the diagram.
 
-Other than the explicit rules listed here, you're always allowed to move things around freely (except terminals).  You can <kbd>Left-drag</kbd> nodes, lines, arrows, and labels.
+Other than the explicit rules listed here, you’re always allowed to move things around freely (except terminals).  You can <kbd>Left-drag</kbd> nodes, lines, arrows, and labels.
 
 #### Minor rules
 
@@ -85,6 +169,8 @@ Other than the explicit rules listed here, you're always allowed to move things 
 - **Summation elimination**: <kbd>Right-click</kbd> on a summation sign in the tableau to eliminate this variable if it’s constrained by a Kronecker delta.
 
 - **Delta modification**: You can add/remove Kronecker deltas as long as the parts that are lost/gained are still inferrable from the diagram itself.
+
+- **Delta transport**: Phases and weights can be “transported” along a Kronecker delta by drag and drop.
 
 #### Major rules
 
@@ -149,9 +235,9 @@ An arrow represents a phase as well as a reversal in the sign of the
       <var>j</var>
 <var>m</var> ---->---- <var>m</var>′
 
-= (-1)<sup><var>j</var> − <var>m</var></sup> δ<sub><var>m</var>, −<var>m</var>′</sub></code></pre>
+= (−1)<sup><var>j</var> − <var>m</var></sup> δ<sub><var>m</var>, −<var>m</var>′</sub></code></pre>
 
-This is the main difference from the conventional Jucys diagrams, which instead use arrows for variance (bra vs ket / time-forward vs time-reversed).
+This is the so-called *metric tensor* in angular momentum theory.  This is the main difference from the conventional Jucys diagrams, which instead use arrows for variance (bra vs ket / time-forward vs time-reversed).
 
 Translating from conventional Jucys diagrams to the formalism here is pretty straightforward.  Simply erase all outgoing arrows on external lines.
 

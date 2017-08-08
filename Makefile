@@ -7,7 +7,7 @@ build: dist/help.html node_modules
 	npm run build
 
 dist/help.html: README.md
-	mkdir $(@D)
+	mkdir -p $(@D)
 	pandoc README.md -o $@
 
 serve: node_modules
