@@ -3,7 +3,7 @@ all: build
 clean:
 	rm -fr dist tools/output
 
-build: dist/help.html node_modules
+build: dist/help.html node_modules tools/bower_components
 	npm run build
 
 dist/help.html: README.md
@@ -37,7 +37,12 @@ dist/.git/config:
 	git commit -m _ --allow-empty && \
 	git remote add origin "$$url"
 
-node_modules:
+node_modules: package.json
 	npm install
+	touch $@
+
+bower_components: tools/bower.json
+	(cd tools && bower install)
+	touch $@
 
 .PHONY: doc deploy
