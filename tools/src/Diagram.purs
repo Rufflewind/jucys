@@ -1300,10 +1300,10 @@ constructSubdiagrams exprs =
   where
     grid' =
       grid
-      { x0: 80.0
-      , y0: 100.0
-      , width: 140.0
-      , height: 200.0
+      { x0: 50.0
+      , y0: 50.0
+      , width: 120.0
+      , height: 120.0
       , numPerRow: 5
       }
 

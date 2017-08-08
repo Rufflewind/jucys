@@ -4711,6 +4711,7 @@ function mouseUp(event) {
             clearTrack(editor, event)
         }
         event.stopPropagation()
+        event.preventDefault()
     }
 }
 

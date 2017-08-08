@@ -19,7 +19,7 @@ main h1 {
 main textarea {
     display: block;
     font-family: monospace;
-    width: 100%;
+    width: 600px;
     height: 200px;
     margin: 10px;
 }
