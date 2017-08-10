@@ -4,7 +4,7 @@ a:link, a:visited {
 }
 
 a:hover {
-    color: red;
+    color: green;
     text-decoration: underline;
 }
 
@@ -32,5 +32,6 @@ main a {
 
 main .error {
     color: red;
+    font-weight: bold;
     margin: 10px;
 }

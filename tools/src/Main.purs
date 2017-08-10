@@ -24,9 +24,9 @@ initialState :: MainState
 initialState = { input: "", link: "", error: "" }
 
 data Query a
-  = UpdateLink a
-  | ValueInput String a
-  | Initialize a
+  = Initialize a
+  | SetInput String a
+  | UpdateLink a
 
 inputStorageKey :: String
 inputStorageKey = "input"
@@ -52,7 +52,8 @@ mainUI =
     , HH.textarea
       [ HP.id_ "input"
       , HP.value state.input
-      , HE.onValueInput (HE.input ValueInput) ]
+      , HE.onBlur (HE.input_ UpdateLink)
+      , HE.onValueInput (HE.input SetInput) ]
     , if state.error == ""
       then
         HH.a
@@ -61,7 +62,9 @@ mainUI =
       else
         HH.div
         [ HP.class_ (HH.ClassName "error") ]
-        [ HH.text (if state.error == "" then "\xa0" else state.error)]
+        [ HH.text if state.error == ""
+                  then "\xa0"
+                  else state.error]
     ]
 
   eval :: Query ~> H.ComponentDSL MainState Query Void (Aff (HE' eff))
@@ -72,12 +75,12 @@ mainUI =
                         >>= Storage.getItem inputStorageKey)
       State.modify \state -> state { input = fromMaybe defaultInput input }
       eval (UpdateLink next)
-    ValueInput input next -> do
+    SetInput input next -> do
       State.modify \state -> state { input = input }
       liftEff (window
                >>= Window.localStorage
                >>= Storage.setItem inputStorageKey input)
-      eval (UpdateLink next)
+      pure next
     UpdateLink next -> do
       state <- State.get
       case Diagram.parseSubdiagrams state.input >>=
