@@ -232,7 +232,7 @@ Each **line** represents a <code>(<var>j</var>, <var>m</var>)</code> pair.  For 
 
 The label of a line describes the label of the <code><var>j</var></code>, not the <code><var>m</var></code>.  Every line represents a unique <code><var>m</var></code> variable, so it’s unnecessary to show the <code><var>m</var></code> variables.
 
-An arrow represents a phase as well as a reversal in the sign of the
+An arrow represents a phase as well as a reversal in the sign of the <code><var>m</var></code> variable:
 
 <pre><code>
       <var>j</var>
