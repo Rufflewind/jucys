@@ -3890,7 +3890,7 @@ function editDelta(deltaIndex, input) {
         diagram.deltas = oldDeltas.slice()
         diagram.deltas.splice(
             deltaIndex, 1,
-            ...input.split(/[,;\n]/).map(delta =>
+            ...input.split(/[;\n]/).map(delta =>
                 delta.split("=").map(s => {
                     s = s.trim()
                     if (s && !isValidSuperlineId(s)) {
