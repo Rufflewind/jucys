@@ -1146,6 +1146,7 @@ instance showAngMomentum :: Show AngMomentum where
 data SubdiagramExpr
   = EW3j AngMomentum AngMomentum AngMomentum
   | EWet AngMomentum AngMomentum AngMomentum
+  | ERel AngMomentum AngMomentum
   | ERec AngMomentum AngMomentum
 
 derive instance genericSubdiagramExpr :: Generic SubdiagramExpr _
@@ -1240,6 +1241,11 @@ constructSubdiagram = case _ of
          >=> joinTerminals n1''' n1
          >=> joinTerminals n2' n2
          >=> joinTerminals n3' n3)
+  ERel j1' j2' -> do
+    {diagram: d1, n: n1, j: j1} <- angMomentumSubdiagram j1'
+    {diagram: d2, n: n2, j: j2} <- angMomentumSubdiagram j2'
+    multiplyDiagrams [d1, d2]
+      # joinTerminals n1 n2
   ERec j1' j2' -> do
     {diagram: d1, n: n1, j: j1} <- angMomentumSubdiagram j1'
     {diagram: d2, n: n2, j: j2} <- angMomentumSubdiagram j2'
@@ -1357,6 +1363,9 @@ parseSubdiagram =
         (EW3j <$> (parseAngMomentum <?> "expected 1st j")
               <*> (parseAngMomentum <?> "expected 2nd j")
               <*> (parseAngMomentum <?> "expected 3rd j"))
+  <|> parseTokenIs (Right "rel") *>
+        (ERel <$> (parseAngMomentum <?> "expected left j")
+              <*> (parseAngMomentum <?> "expected right j"))
   <|> parseTokenIs (Right "rec") *>
         (ERec <$> (parseAngMomentum <?> "expected left j")
               <*> (parseAngMomentum <?> "expected right j"))

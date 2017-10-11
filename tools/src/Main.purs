@@ -102,7 +102,7 @@ mainUI =
 # syntax:
 #
 #   w3j|wet <j> <j> <j>
-#   rec <j> <j>
+#   rec|rel <j> <j>
 #
 # where <j> = <j-var> | <j> ± <j> | ±<j>
 """

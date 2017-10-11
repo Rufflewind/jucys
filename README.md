@@ -66,28 +66,47 @@ Note that the input editor does *not* specify which <code><var>j</var></code>s t
 
 The plus signs are important: they indicate that the angular momenta are covariant with respect to each other.  If you want to couple a normal angular momentum with a *time-reversed* angular momentum, then you have to write `a - b` instead.  “Negation” as far as the input tool is concerned just means the insertion of a metric tensor <code>(−1)<sup><var>j</var> − <var>m</var></sup> δ<sub><var>m</var>, −<var>m</var>′</sub></code>.  Negating twice doesn’t give you the exact same angular momentum back; instead it accumulates a phase of <code>(−1)<sup>2 <var>j</var></sup></code>.  The ordering is important too: `a + b` and `b + a` aren’t quite the same: they are different up to a phase factor.
 
-What `rec` does is actually pretty dumb: it just connects the total angular momenta of both sides together, and then divides by <code>(2 <var>j</var><sub>total</sub> + 1)</code>.
+What `rec` does is actually pretty dumb: it just connects the total angular momenta of both sides together, and then divides by <code>(2 <var>j</var><sub>total</sub> + 1)</code>.  If you don’t want this compensating factor, use `rel` instead.
 
-#### Example 2: Pandya transform (12)k(34) ↔ (14)k(32)
+#### Example 2: Scalar Pandya transform (12)(34) ↔ (14)(32)
+
+Unreduced spherical-scalar matrix elements can be written using `rel` or `rec`, depending the direction of the transformation.
+
+For example, say you want to derive the transformation from unreduced ordinary two-body matrix elements to unreduced Pandya matrix elements:
+
+    ⟨ a b ¦ c d ⟩ → −⟨ a −d ¦ c −b ⟩
+
+(The minus sign in front of the matrix element is just a convention chosen by the Pandya matrix elements.)  To input this, you write each matrix element on its own line, with the *source* using `rel` and *destination* using `rec`:
+
+    rel (a + b) (c + d)
+    rec (a - d) (c - b)
+
+You’ll see right away that this is a 6-j symbol (a.k.a. tetrahedral graph/K<sub>4</sub>).  This establishes the relation:
+
+    (destination)   = ∑[…]   (diagram)   ×   (source)
+
+    −⟨ a −d ¦ c −b ⟩ = ∑[ab] (−1)^(2 ab) (2 ab + 1) {a b ab; c d ad} ⟨ a b ¦ c d ⟩
+
+#### Example 3: Tensor Pandya transform (12)k(34) ↔ (14)k(32)
 
 Reduced matrix elements of spherical tensors is written using `wet`.  Here, the Wigner–Eckart coupling convention of Wigner, Racah, and many others is used:
 
 <pre><code>⟨<var>j</var><sub>a</sub> <var>m</var><sub>a</sub>|<var>T</var><sup><var>k</var></sup><sub><var>q</var></sub>|<var>j</var><sub>b</sub> <var>m</var><sub>b</sub>⟩ = (−1)<sup><var>j</var><sub>a</sub> − <var>m</var><sub>a</sub></sup> (<var>j</var><sub>a</sub> <var>m</var><sub>a</sub> <var>k</var> <var>q</var> <var>j</var><sub>b</sub> <var>m</var><sub>b</sub>) ⟨<var>j</var><sub>a</sub>‖<var>T</var><sup><var>k</var></sup><sub></sub>‖<var>j</var><sub>b</sub>⟩</code></pre>
 
-For example, say you want to derive the transformation between ordinary two-body matrix elements and Pandya matrix elements:
+For example, say you want to derive the transformation between reduced ordinary two-body matrix elements and reduced Pandya matrix elements:
 
-    ⟨ a b ‖ k ‖ c d ⟩ ↔ ⟨ a −d ‖ k ‖ c −b ⟩
+    ⟨ a b ‖ k ‖ c d ⟩ ↔ −⟨ a −d ‖ k ‖ c −b ⟩
 
-Here, `k` denotes the spherical tensor rank and the minus sign indicates time-reversal.  To input this, you write each matrix element on its own line, coupled with `wet`:
+(The minus sign in front of the matrix element is just a convention chosen by the Pandya matrix elements.)  Here, `k` denotes the spherical tensor rank and the minus sign indicates time-reversal.  To input this, you write each matrix element on its own line, coupled with `wet`:
 
     wet (a + b) k (c + d)
     wet (a - d) k (c - b)
 
 The ordering of lines doesn’t matter, because recoupling coefficients are real and symmetric!  You’ll see right away that this is a 9-j symbol (a.k.a. utility graph/Thomsen graph/K<sub>3,3</sub>).
 
-If you want to look at just scalar coupling, then you just need to replace `k` with `0` (either in the diagram input or diagram editor).  After a bit of manipulation, you’ll get essentially a 6-j symbol up to Kronecker deltas, phases, and weights.
+If you want to look at just scalar coupling of reduced matrix elements, then you just need to replace `k` with `0` (either in the diagram input or diagram editor).  After a bit of manipulation, you’ll get essentially a 6-j symbol up to Kronecker deltas, phases, and weights.
 
-#### Example 3: A tensor product
+#### Example 4: A tensor product
 
 Without motivating why we care about tensor products, suppose you want to calculate the Clebsch–Gordan coupled product:
 
