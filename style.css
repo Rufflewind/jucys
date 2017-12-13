@@ -219,6 +219,13 @@ body.frozen #help {
     cursor: default;
 }
 
+#diagram {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 #tableau-wrapper .zero {
     color: var(--zero-color);
     font-weight: bold;
