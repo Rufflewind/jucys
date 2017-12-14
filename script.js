@@ -884,6 +884,9 @@ function vnodeRenderChildren(children, elem) {
         let oldChild = oldChildren[j]
         if (oldChild instanceof Element ||
             oldChild instanceof Text) {
+            // this function is not re-entrant, so this could throw an exception
+            // if a blur event removes the child before we get a chance to;
+            // we work around this by serializing execution of applyRendering
             elem.removeChild(oldChild)
         } else {
             j += 1
@@ -940,17 +943,27 @@ function vnode(name, attributes, ...children) {
     return new Vnode(namespace, name, attributes, children)
 }
 
+let renderQueue = []
 function applyRendering(rendering) {
-    rendering.forEach(spec => {
-        const elem = spec.element
-        if (!elem) {
-            throw new Error("invalid elem")
-        }
-        if (spec.attributes) {
-            vnodeAmendAttributes(spec.attributes, elem)
-        }
-        vnodeRenderChildren(spec.children, elem)
-    })
+    // work around the lack of re-entrancy
+    renderQueue.push(rendering)
+    if (renderQueue.length != 1) {      // we are not alone
+        return
+    }
+    while (renderQueue.length) {
+        const rendering = renderQueue[0]
+        rendering.forEach(spec => {
+            const elem = spec.element
+            if (!elem) {
+                throw new Error("invalid elem")
+            }
+            if (spec.attributes) {
+                vnodeAmendAttributes(spec.attributes, elem)
+            }
+            vnodeRenderChildren(spec.children, elem)
+        })
+        renderQueue.shift()
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2234,6 +2247,7 @@ class Diagram {
     renameSuperlines(renames) {
         return new Diagram(Object.assign({}, this.rawDiagram, {
             lines: Object.freeze(Object.assign(
+                {},
                 ...Object.entries(this.rawDiagram.lines)
                 .map(([lineId, line]) => ({
                     [lineId]: Object.freeze(Object.assign({}, line, {
@@ -2466,11 +2480,11 @@ class Diagram {
                     throw new Error("node lines mismatch")
                 }
                 if (sign < 0) {
-                    superlineMerge.push({
-                        [nodeLines[0]]: {phase: 1},
-                        [nodeLines[1]]: {phase: 1},
-                        [nodeLines[2]]: {phase: 1},
-                    })
+                    superlineMerge.push(
+                        {[nodeLines[0]]: {phase: 1}},
+                        {[nodeLines[1]]: {phase: 1}},
+                        {[nodeLines[2]]: {phase: 1}},
+                    )
                 }
             } else if (lexicalCmp(nodeLines, pattNodeLines, defaultCmp) != 0) {
                 throw new Error("node lines mismatch")
@@ -2594,7 +2608,7 @@ class Diagram {
                         lines: lines,
                     }
                 }
-                lines.push(replLine)
+                lines.push(replLine.line)
             }
         }
         function getPart(joining) {
@@ -2917,6 +2931,8 @@ function w3jElimRule(diagram, lineId) {
         || line3.superlineId != line4.superlineId) {
         return "opposing j's don't match"
     }
+    const lineIdOther = line1.id == line3.id ? line4.id : line3.id
+    console.assert(line1.id, lineIdOther)
     return diagram.substitute({
         nodes: [
             terminalNode(line1.toString(), "a"),
@@ -2940,12 +2956,12 @@ function w3jElimRule(diagram, lineId) {
         nodes: [
             terminalNode(line1.id, "a"),
             terminalNode(line1.id, "b"),
-            terminalNode(line3.id, "c"),
-            terminalNode(line3.id, "d"),
+            terminalNode(lineIdOther, "c"),
+            terminalNode(lineIdOther, "d"),
         ],
         lines: {
             [line1.id]: {superline: line1.superlineId, direction: 0},
-            [line3.id]: {superline: line3.superlineId, direction: 0},
+            [lineIdOther]: {superline: line3.superlineId, direction: 0},
         },
     }).rawDiagram
 }
@@ -3157,10 +3173,10 @@ function glueRule(diagram, lineId1, lineId2, xy1, xy2) {
             $4: {superline: line2.superlineId, direction: 0},
             $5: {superline: "0", direction: 0},
         },
-        superlines: {
-            [line1.superlineId]: {weight: +1},
-            [line2.superlineId]: {weight: +1},
-        },
+        superlines: mergeSuperlineLists( // these superlineIds might collide!
+            {[line1.superlineId]: {weight: +1}},
+            {[line2.superlineId]: {weight: +1}},
+        ),
     }).rawDiagram
 }
 
