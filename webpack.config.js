@@ -1,3 +1,5 @@
+const child_process = require("child_process")
+
 module.exports = {
     devtool: "source-map",
     entry: {
@@ -48,7 +50,24 @@ module.exports = {
     plugins: [
         new (require("copy-webpack-plugin"))([
             {from: "*.css"},
-            {from: "*.html"},
+            {
+                from: "*.html",
+                transform: (content, path) =>
+                    Buffer.from(content.toString().replace("{{VERSION}}", () =>
+                        `r${
+                            child_process
+                                .execSync("git rev-list --count HEAD")
+                                .toString().trim()
+                        }-g${
+                            child_process
+                                .execSync("git rev-parse --short HEAD")
+                                .toString().trim()
+                        }${
+                            child_process
+                                .execSync("git status --porcelain")
+                                .toString().trim() ? "-dirty" : ""
+                        }`)),
+            },
             {from: "*.png"},
             {from: "tools/*.css"},
             {from: "tools/*.html"},
