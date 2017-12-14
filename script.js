@@ -1002,6 +1002,7 @@ function mergeDeltas(...deltaLists) {
 /** Tests whether the 'subdeltas' is a subset of (implied by) 'deltas'. */
 function containsDeltas(deltas, subdeltas) {
     deltas = mergeDeltas(deltas)
+    subdeltas = mergeDeltas(subdeltas)
     let finder = {}
     deltas.forEach(delta => delta.forEach(x =>
         finder[x] = delta
@@ -1043,13 +1044,13 @@ function findDeltaEntry(deltas, entry) {
     return null
 }
 
-function relatedDeltas(deltas, entry) {
+function relatedDelta(deltas, entry) {
     const ji = findDeltaEntry(deltas, entry)
     if (!ji) {
-        return []
+        return [entry]
     }
     const [j, i] = ji
-    return arrayRemoveMany(deltas[j], [i]).map(x => [entry, x])
+    return [entry].concat(arrayRemoveMany(deltas[j], [i]))
 }
 
 /** Warning: this may not preserve the diagram! */
@@ -1834,7 +1835,7 @@ function deleteNode(diagram, nodeIndex) {
  * obvious from its topology. */
 function inferDeltas(diagram) {
     let deltas = []
-    let knownZeros = new Set()
+    let knownZeros = new Set(["0"])
     diagram = new Diagram(diagram)
     for (const node of diagram.nodes()) {
         const loop = findW3jLoop(node)
@@ -1853,7 +1854,7 @@ function inferDeltas(diagram) {
             }
         }
     }
-    deltas.push(["0"].concat(Array.from(knownZeros)))
+    deltas.push(Array.from(knownZeros))
     return deltas
 }
 
@@ -2047,6 +2048,16 @@ class DiagramLine {
     rawAssign(rawDiagram, end, lineId) {
         rawDiagram.nodes[this.node(end).index].lines[this.lineIndex(end)] = lineId
     }
+
+    testCuttability() {
+        let errors = [subdiagramOrientability(this),
+                      subdiagramOrientability(this.reverse())].filter(identity)
+        if (errors.length == 2) {
+            errors.sort((x, y) => x.priority - y.priority)
+            return errors[0].error
+        }
+        return null
+    }
 }
 
 class DiagramNode {
@@ -2181,9 +2192,9 @@ class Diagram {
     }
 
     isEquallyConstrained(superlineId, deltas) {
-        const related = relatedDeltas(this.rawDiagram.deltas, superlineId)
-        const otherRelated = relatedDeltas(deltas, superlineId)
-        return equalDeltas(related, otherRelated)
+        const related = relatedDelta(this.rawDiagram.deltas, superlineId)
+        const otherRelated = relatedDelta(deltas, superlineId)
+        return equalDeltas([related], [otherRelated])
     }
 
     renameLines(renames) {
@@ -3023,7 +3034,7 @@ function subdiagramOrientability(line0) {
     const subdiagram = getConnectedSubdiagram(line0)
     if (!subdiagram.isolated) {
         return {
-            error: "subdiagram must be isolated",
+            error: "only bridges can be cut",
             priority: 1,
         }
     }
@@ -3056,11 +3067,9 @@ function cutRule(diagram, lineId, xy1, xy2) {
         [xy1, xy2] = [xy2, xy1]
     }
     if (line.superlineId != "0") {
-        let errors = [subdiagramOrientability(line),
-                      subdiagramOrientability(line.reverse())].filter(identity)
-        if (errors.length == 2) {
-            errors.sort((x, y) => x.priority - y.priority)
-            return errors[0].error
+        let error = line.testCuttability()
+        if (error) {
+            return error
         }
     }
     const dxy = vectorSubtract(xy1, xy2)
@@ -3931,11 +3940,32 @@ function editDelta(deltaIndex, input) {
             }
         }
         const inferredDeltas = inferDeltas(diagram)
+        const oldInferredDeltas = mergeDeltas(inferredDeltas, oldDeltas)
+        const newInferredDeltas = mergeDeltas(inferredDeltas, diagram.deltas)
+        let equivalent = equalDeltas(oldInferredDeltas, newInferredDeltas)
+        diagram = new Diagram(diagram)
+        if (!equivalent) {
+            // inferDeltas doesn't infer zero lines due to bridges between
+            // orientable subdiagrams for efficiency reasons; instead we look
+            // for the remaining j's in the zero delta and try to infer those
+            const oldZeroDelta = new Set(relatedDelta(oldInferredDeltas, "0"))
+            const newZeroDelta = new Set(relatedDelta(newInferredDeltas, "0"))
+            let diff = new Set([...oldZeroDelta, ...newZeroDelta]
+                .filter(x => !oldZeroDelta.has(x) || !newZeroDelta.has(x)))
+            const diffDelta = ["0", ...diff]
+            if (equalDeltas(mergeDeltas([diffDelta], oldInferredDeltas),
+                            mergeDeltas([diffDelta], newInferredDeltas))) {
+                for (const line of diagram.lines()) {
+                    if (diff.has(line.superlineId) && !line.testCuttability()) {
+                        diff.delete(line.superlineId)
+                    }
+                }
+                equivalent = diff.size == 0
+            }
+        }
         return {
-            equivalent: equalDeltas(
-                mergeDeltas(inferredDeltas, oldDeltas),
-                mergeDeltas(inferredDeltas, diagram.deltas)),
-            diagram: new Diagram(diagram).removeUnusedSuperlines().rawDiagram,
+            equivalent,
+            diagram: diagram.removeUnusedSuperlines().rawDiagram,
         }
     }
 }
@@ -3947,8 +3977,7 @@ function renderDeltaJ(j) {
 }
 
 function renderDeltaTableau(update, deltas, focus, frozen) {
-    const addNew = frozen ? [] : [null]
-    return vnode("ul", {}, ...deltas.concat(addNew).map((delta, deltaIndex) => {
+    return vnode("ul", {}, ...deltas.concat([null]).map((delta, deltaIndex) => {
         const focused = focus.type == "delta"
                      && focus.deltaIndex == deltaIndex
         const children = delta == null
