@@ -190,6 +190,8 @@ Other than the explicit rules listed here, you’re always allowed to move thing
 
 - **Summation elimination**: <kbd>Right-click</kbd> on a summation sign in the tableau to eliminate this variable if it’s constrained by a Kronecker delta.
 
+- **Summation introduction**: <kbd>Middle-click</kbd> on a summation sign in the tableau to introduce a summation over a new variable constrained by a Kronecker delta with the selected variable.
+
 - **Delta modification**: You can add/remove Kronecker deltas as long as the parts that are lost/gained are still inferrable from the diagram itself.
 
 - **Delta transport**: Phases and weights can be “transported” along a Kronecker delta by drag and drop.

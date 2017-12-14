@@ -3638,6 +3638,22 @@ function editSummed(diagram, superlineId) {
     }
 }
 
+function introSum(diagram, superlineId) {
+    // introduce sum[j_fresh] delta[j_fresh j]
+    const freshSuperlineId = availSuperlineLabels(diagram).next().value
+    diagram = deepClone(diagram)
+    diagram.superlines[freshSuperlineId] = Object.assign({}, EMPTY_SUPERLINE, {
+        summed: true,
+    })
+    diagram.deltas = mergeDeltas(diagram.deltas, [
+        [superlineId, freshSuperlineId],
+    ])
+    return {
+        equivalent: true,
+        diagram: diagram,
+    }
+}
+
 function renderJTableau(update, superlines, editor) {
     const frozen = editor.snapshot.frozen
     const focus = editor.focus
@@ -3681,6 +3697,10 @@ function renderJTableau(update, superlines, editor) {
                     if (e.buttons == 1) {
                         update(modifyDiagramWith(diagram =>
                             editSummed(diagram, superlineId)))
+                        e.stopPropagation()
+                    } else if (e.buttons == 4) {
+                        update(modifyDiagramWith(diagram =>
+                            introSum(diagram, superlineId)))
                         e.stopPropagation()
                     }
                 },
