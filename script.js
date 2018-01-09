@@ -4844,7 +4844,10 @@ function applyStylesheet(stylesheet, elem) {
                 for (const prop of Object.keys(rule)) {
                     const propName = prop.replace(/[A-Z]/g, c =>
                         "-" + c.toLowerCase())
-                    if (filter(propName)) {
+                    if (propName == "transform") {
+                        // Inkscape doesn't handle transforms in style
+                        elem.setAttribute(propName, rule[prop])
+                    } else if (filter(propName)) {
                         style.push(propName + ": " + rule[prop])
                     }
                 }
