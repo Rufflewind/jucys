@@ -9,21 +9,6 @@
     --bad-external-color: #dcb406;
 }
 
-g.line.zero path.fg {
-    stroke: var(--zero-color);
-    font-weight: bold;
-}
-
-g.line.zero text.label {
-    fill: var(--zero-color);
-    font-weight: bold;
-}
-
-g.line.zero .arrowhead {
-    fill: var(--zero-color);
-    font-weight: bold;
-}
-
 g.line * {
     transition: fill 0.3s, fill-opacity 0.3s, stroke 0.3s, stroke-opacity 0.3s;
 }
@@ -94,6 +79,21 @@ g.line.two-j path.fg {
 
 g.line.two-j .arrowhead {
     fill: var(--two-j-color);
+}
+
+g.line.zero path.fg {
+    stroke: var(--zero-color);
+    font-weight: bold;
+}
+
+g.line.zero text.label {
+    fill: var(--zero-color);
+    font-weight: bold;
+}
+
+g.line.zero .arrowhead {
+    fill: var(--zero-color);
+    font-weight: bold;
 }
 
 g.arrow.ambient .arrowhead {
