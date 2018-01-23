@@ -91,7 +91,7 @@ You’ll see right away that this is a 6-j symbol (a.k.a. tetrahedral graph/K<su
 
 Reduced matrix elements of spherical tensors is written using `wet`.  Here, the Wigner–Eckart coupling convention of Wigner, Racah, and many others is used:
 
-<pre><code>⟨<var>j</var><sub>a</sub> <var>m</var><sub>a</sub>|<var>T</var><sup><var>k</var></sup><sub><var>q</var></sub>|<var>j</var><sub>b</sub> <var>m</var><sub>b</sub>⟩ = (−1)<sup><var>j</var><sub>a</sub> − <var>m</var><sub>a</sub></sup> (<var>j</var><sub>a</sub> <var>m</var><sub>a</sub> <var>k</var> <var>q</var> <var>j</var><sub>b</sub> <var>m</var><sub>b</sub>) ⟨<var>j</var><sub>a</sub>‖<var>T</var><sup><var>k</var></sup><sub></sub>‖<var>j</var><sub>b</sub>⟩</code></pre>
+<pre><code>⟨<var>j</var><sub>a</sub> <var>m</var><sub>a</sub>|<var>T</var><sup><var>k</var></sup><sub><var>q</var></sub>|<var>j</var><sub>b</sub> <var>m</var><sub>b</sub>⟩ = (−1)<sup><var>j</var><sub>a</sub> − <var>m</var><sub>a</sub></sup> (<var>j</var><sub>a</sub> −<var>m</var><sub>a</sub> <var>k</var> <var>q</var> <var>j</var><sub>b</sub> <var>m</var><sub>b</sub>) ⟨<var>j</var><sub>a</sub>‖<var>T</var><sup><var>k</var></sup><sub></sub>‖<var>j</var><sub>b</sub>⟩</code></pre>
 
 For example, say you want to derive the transformation between reduced ordinary two-body matrix elements and reduced Pandya matrix elements:
 
