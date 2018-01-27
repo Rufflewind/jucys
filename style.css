@@ -1,7 +1,7 @@
 :root {
     --two-j-color: #3274b0;
     --zero-color: #a89a9f;
-    --sans: "Fira Sans", "Oxygen Sans", sans;
+    --sans: "Fira Sans", "Oxygen Sans", sans-serif;
     --monospace: "Fira Mono", "Oxygen Mono", monospace;
 }
 
