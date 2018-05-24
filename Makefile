@@ -41,7 +41,7 @@ node_modules: package.json
 	npm install
 	touch $@
 
-bower_components: tools/bower.json
+tools/bower_components: tools/bower.json
 	(cd tools && bower install)
 	touch $@
 
