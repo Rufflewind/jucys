@@ -1,12 +1,6 @@
 module Main where
 import Common
-import Control.Monad.Aff (Aff)
-import Control.Monad.Eff.Unsafe (unsafePerformEff)
 import Control.Monad.State as State
-import DOM (DOM)
-import DOM.HTML (window)
-import DOM.HTML.Window as Window
-import DOM.WebStorage.Storage as Storage
 import Diagram as Diagram
 import Halogen as H
 import Halogen.Aff as HA
@@ -15,35 +9,35 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.VDom.Driver (runUI)
 import Utils as U
-
-type HE' eff = HA.HalogenEffects (console :: CONSOLE, dom :: DOM | eff)
+import Web.HTML (window)
+import Web.HTML.Window as Window
+import Web.Storage.Storage as Storage
 
 type MainState = { input :: String, link :: String, error :: String }
 
 initialState :: MainState
 initialState = { input: "", link: "", error: "" }
 
-data Query a
-  = Initialize a
-  | SetInput String a
-  | UpdateLink a
+data Action
+  = Initialize
+  | SetInput String
+  | UpdateLink
 
 inputStorageKey :: String
 inputStorageKey = "input"
 
-mainUI :: forall eff. H.Component HH.HTML Query Unit Void (Aff (HE' eff))
+mainUI :: forall m q. MonadEffect m => H.Component HH.HTML q Unit Void m
 mainUI =
-  H.lifecycleComponent
+  H.mkComponent
   { initialState: \ _ -> initialState
   , render
-  , eval
-  , initializer: Just (H.action Initialize)
-  , finalizer: Nothing
-  , receiver: \ _ -> Nothing
+  , eval: H.mkEval (H.defaultEval
+                    { handleAction = handleAction
+                    , initialize = Just Initialize })
   }
   where
 
-  render :: MainState -> H.ComponentHTML Query
+  render :: MainState -> H.ComponentHTML Action () m
   render state =
     HH.main
     []
@@ -52,8 +46,8 @@ mainUI =
     , HH.textarea
       [ HP.id_ "input"
       , HP.value state.input
-      , HE.onBlur (HE.input_ UpdateLink)
-      , HE.onValueInput (HE.input SetInput) ]
+      , HE.onBlur (\_ -> Just UpdateLink)
+      , HE.onValueInput (\input -> Just (SetInput input)) ]
     , if state.error == ""
       then
         HH.a
@@ -67,21 +61,20 @@ mainUI =
                   else state.error]
     ]
 
-  eval :: Query ~> H.ComponentDSL MainState Query Void (Aff (HE' eff))
-  eval = case _ of
-    Initialize next -> do
-      input <- liftEff (window
-                        >>= Window.localStorage
-                        >>= Storage.getItem inputStorageKey)
-      State.modify \state -> state { input = fromMaybe defaultInput input }
-      eval (UpdateLink next)
-    SetInput input next -> do
-      State.modify \state -> state { input = input }
-      liftEff (window
-               >>= Window.localStorage
-               >>= Storage.setItem inputStorageKey input)
-      pure next
-    UpdateLink next -> do
+  handleAction :: Action -> H.HalogenM MainState Action () Void m Unit
+  handleAction = case _ of
+    Initialize -> do
+      input <- liftEffect (window
+                           >>= Window.localStorage
+                           >>= Storage.getItem inputStorageKey)
+      State.modify_ \state -> state { input = fromMaybe defaultInput input }
+      handleAction UpdateLink
+    SetInput input -> do
+      State.modify_ \state -> state { input = input }
+      liftEffect (window
+                  >>= Window.localStorage
+                  >>= Storage.setItem inputStorageKey input)
+    UpdateLink -> do
       state <- State.get
       case Diagram.parseSubdiagrams state.input >>=
            Diagram.constructSubdiagrams of
@@ -91,11 +84,10 @@ mainUI =
                       then "unspecified error"
                       else error }
         Right diagram -> do
-          State.put state
-            { error = ""
-            , link = Diagram.snapshotHash (Diagram.newFrozenSnapshot diagram)
-            }
-      pure next
+          State.put do
+            case Diagram.snapshotHash (Diagram.newFrozenSnapshot diagram) of
+              Just link -> state { error = "", link = link }
+              Nothing -> state { error = "snapshotHash failed", link = "" }
 
   defaultInput =
     U.dropFirstChar """
@@ -107,8 +99,5 @@ mainUI =
 # where <j> = <j-var> | <j> ± <j> | ±<j>
 """
 
-main :: Eff (HE' ()) Unit
+main :: Effect Unit
 main = HA.runHalogenAff (HA.awaitBody >>= runUI mainUI unit)
-
-_main :: Unit
-_main = unsafePerformEff main

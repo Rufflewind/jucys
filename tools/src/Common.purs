@@ -2,9 +2,8 @@ module Common (module Common, module Prelude, module X) where
 import Prelude
 import Control.Alt ((<|>)) as X
 import Control.Lazy (fix) as X
-import Control.Monad.Eff (Eff) as X
-import Control.Monad.Eff.Class (liftEff) as X
-import Control.Monad.Eff.Console (CONSOLE, log) as X
+import Effect (Effect) as X
+import Effect.Class (class MonadEffect, liftEffect) as X
 import Control.Monad.Error.Class (class MonadThrow, throwError) as X
 import Control.Monad.Except (Except, runExcept) as X
 import Control.Monad.Reader.Class (class MonadReader) as X
@@ -25,6 +24,7 @@ import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex,
                                foldlWithIndex, foldrWithIndex,
                                foldlWithIndexDefault,
                                foldrWithIndexDefault) as X
+import Data.FunctorWithIndex (mapWithIndex) as X
 import Data.Generic.Rep (class Generic) as X
 import Data.Generic.Rep.Show (genericShow) as X
 import Data.Group (class Group, ginverse) as X
@@ -55,17 +55,17 @@ import Data.Monoid (class Monoid, mempty) as X
 import Data.Monoid.Dual (Dual(..)) as X
 import Data.Monoid.Endo (Endo(..)) as X
 import Data.Newtype (class Newtype, unwrap, wrap) as X
-import Data.Profunctor (class Profunctor, dimap, lmap, rmap) as X
+import Data.Profunctor (class Profunctor, dimap, lcmap, rmap) as X
 import Data.Profunctor.Star (Star(..)) as X
 import Data.Profunctor.Strong (class Strong, first, second) as X
 import Data.Set (Set) as X
-import Data.StrMap (StrMap) as X
 import Data.Symbol (SProxy(..)) as X
 import Data.Traversable (sequence, for, traverse) as X
 import Data.TraversableWithIndex (traverseWithIndex) as X
 import Data.Tuple (Tuple(..), curry, fst, snd, swap, uncurry) as X
 import Data.Unfoldable (class Unfoldable, unfoldr) as X
-import Debug.Trace (trace, traceA, traceAny, traceShow) as X
+import Effect.Console (log) as X
+import Foreign.Object (Object) as X
 import Math (pi, (%)) as X
 import Partial (crashWith) as X
 import Partial.Unsafe (unsafeCrashWith, unsafePartial) as X

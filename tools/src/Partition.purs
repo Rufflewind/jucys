@@ -23,13 +23,13 @@ module Partition
        ) where
 import Common hiding (foldMap, foldl, foldr)
 import Control.Monad.State.Class as State
+import Effect.Ref (Ref)
+import Effect.Ref as Ref
 import Data.Foldable as F
 import Data.List.Lazy as ListL
 import Data.Map as Map
 import Data.Set as Set
-import Control.Monad.Eff (runPure)
-import Control.Monad.Eff.Ref (Ref, newRef, readRef, modifyRef)
-import Control.Monad.Eff.Ref.Unsafe (unsafeRunRef)
+import Effect.Unsafe (unsafePerformEffect)
 import Utils as U
 
 -- | Partition of a set (disjoint-set data structure).
@@ -59,10 +59,10 @@ instance showPartition :: (Ord a, Show a) => Show (Partition a) where
   show s = "(fromFoldable " <> show (toArray s) <> ")"
 
 wrapPartition :: forall a. Map a (Either Int a) -> Partition a
-wrapPartition m = Partition (runPure (unsafeRunRef (newRef m)))
+wrapPartition m = Partition (unsafePerformEffect (Ref.new m))
 
 unwrapPartition :: forall a. Partition a -> Map a (Either Int a)
-unwrapPartition (Partition r) = runPure (unsafeRunRef (readRef r))
+unwrapPartition (Partition r) = unsafePerformEffect (Ref.read r)
 
 modifyPartition :: forall a. Partition a
                      -> (Map a (Either Int a) -> Map a (Either Int a))
@@ -72,8 +72,7 @@ modifyPartition s f = wrapPartition (f (unwrapPartition s))
 unsafeMutatePartition :: forall a. Partition a
                         -> (Map a (Either Int a) -> Map a (Either Int a))
                         -> Unit
-unsafeMutatePartition (Partition r) f =
-  runPure (unsafeRunRef (modifyRef r f))
+unsafeMutatePartition (Partition r) f = unsafePerformEffect (Ref.modify_ f r)
 
 empty :: forall a. Partition a
 empty = wrapPartition (Map.empty)
@@ -152,7 +151,7 @@ insert x y s =
             Map.insert x' (Left (nx + 1)) >>>
             Map.insert y (Right x')
           Just (Tuple y' ny)
-            | x' == y' -> id
+            | x' == y' -> identity
             | nx >= ny ->
               Map.insert x' (Left (nx + ny)) >>>
               Map.insert y' (Right x')
@@ -172,7 +171,7 @@ delete x s =
       modifyPartition s $
       Map.delete x >>>
       case nodeX of
-        Left 1 -> id
+        Left 1 -> identity
         Left n ->
           flip evalState Nothing <<<
           U.traverseMapWithIndex \y -> case _ of
@@ -188,7 +187,7 @@ delete x s =
           let Tuple x' n = fromJust (lookupLeader xParent s)
           in Map.insert x' (Left (n - 1)) >>>
              if n == 2
-             then id
+             then identity
              else map case _ of
                Right yParent | yParent == x -> Right x'
                nodeY -> nodeY
@@ -240,7 +239,7 @@ fromFoldable = F.foldr (uncurry insert) empty
 
 toUnfoldable :: forall f a. Ord a => Unfoldable f =>
                 Partition a -> f (Tuple a a)
-toUnfoldable s = unfoldr go (Map.toAscUnfoldable (unwrapPartition s)) where
+toUnfoldable s = unfoldr go (Map.toUnfoldable (unwrapPartition s)) where
   go xs = do
     ListL.uncons xs <#> \ {head: Tuple x _, tail} ->
       Tuple (Tuple x (lookup x s)) tail

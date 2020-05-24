@@ -2,7 +2,7 @@ module Test.Main where
 import Common
 import Data.Array as Array
 import Data.NonEmpty (NonEmpty)
-import Test.QuickCheck (QC, quickCheck, quickCheck', (===), (/==))
+import Test.QuickCheck (quickCheck, quickCheck', (===), (/==))
 import Test.QuickCheck.Gen (Gen)
 import Test.QuickCheck.Gen as Gen
 import Partition (Partition)
@@ -14,7 +14,7 @@ randomPartition = do
   ys <- Gen.arrayOf (Gen.sized (Gen.chooseInt 0))
   pure (Partition.fromFoldable (Array.zip xs ys))
 
-main :: QC () Unit
+main :: Effect Unit
 main = do
 
   quickCheck \ (xs :: NonEmpty Array Int) -> do

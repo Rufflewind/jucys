@@ -57,7 +57,6 @@ stack.yaml
 *.hi
 
 # JavaScript
-bower_components/
 node_modules/
 package-lock.json
 
@@ -65,6 +64,7 @@ package-lock.json
 generated-docs/
 output/
 .pulp-cache/
+.spago/
 .psc*
 .purs*
 .psa*

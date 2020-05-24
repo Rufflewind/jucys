@@ -1,6 +1,8 @@
 "use strict"
 
-import diagramStylesheet from "./diagram.css"
+import "./style.css"
+import "./diagram.css"
+import diagramStylesheet from "./diagram.css?postcss"
 
 //////////////////////////////////////////////////////////////////////////////
 // Utility: Generic
@@ -36,7 +38,7 @@ function lexicalCmp(xs, ys, cmp) {
     return defaultCmp(nx, ny)
 }
 
-function permutSign(xs, ys) {
+export function permutSign(xs, ys) {
     let permut = new Map()
     for (const [i, y] of ys.entries()) {
         if (permut.has(y)) {
@@ -297,7 +299,7 @@ function deepDiff(x, y) {
     return {type: "notEqual", left: x, right: y}
 }
 
-function assertEq(x, y) {
+export function assertEq(x, y) {
     const diff = deepDiff(x, y)
     if (diff != null) {
         console.warn(x, y, diff)
@@ -976,7 +978,7 @@ function applyRendering(rendering) {
 // Within a given list of deltas, the variables must be all distinct.
 
 /** Merges the given deltas and simplifies the result. */
-function mergeDeltas(...deltaLists) {
+export function mergeDeltas(...deltaLists) {
     let finalDeltas = []
     let finder = {} // {[entry]: [deltas]} (singleton list)
     deltaLists.forEach(deltas => deltas.forEach(delta => {
@@ -1013,7 +1015,7 @@ function mergeDeltas(...deltaLists) {
 }
 
 /** Tests whether the 'subdeltas' is a subset of (implied by) 'deltas'. */
-function containsDeltas(deltas, subdeltas) {
+export function containsDeltas(deltas, subdeltas) {
     deltas = mergeDeltas(deltas)
     subdeltas = mergeDeltas(subdeltas)
     let finder = {}
@@ -1057,7 +1059,7 @@ function findDeltaEntry(deltas, entry) {
     return null
 }
 
-function relatedDelta(deltas, entry) {
+export function relatedDelta(deltas, entry) {
     const ji = findDeltaEntry(deltas, entry)
     if (!ji) {
         return [entry]
@@ -1067,7 +1069,7 @@ function relatedDelta(deltas, entry) {
 }
 
 /** Warning: this may not preserve the diagram! */
-function removeDeltaEntry(deltas, entry) {
+export function removeDeltaEntry(deltas, entry) {
     const ji = findDeltaEntry(deltas, entry)
     if (!ji) {
         return deltas
@@ -1083,7 +1085,7 @@ function removeDeltaEntry(deltas, entry) {
 //
 // Superlines are just magnitudes (j).
 
-const EMPTY_SUPERLINE = Object.freeze({
+export const EMPTY_SUPERLINE = Object.freeze({
     phase: 0,
     summed: false,
     weight: 0,
@@ -1191,7 +1193,7 @@ const ZERO_LINE = Object.freeze({
     textOffset: 0.0,
 })
 
-function newLine(superlineId) {
+export function newLine(superlineId) {
     return ensureLine({superline: superlineId})
 }
 
@@ -1461,7 +1463,7 @@ function positionOnLine(lineInfo, pos, shift) {
 // Node manipulation
 
 /** Create a terminal node. */
-function terminalNode(lineId, variable, x, y) {
+export function terminalNode(lineId, variable, x, y) {
     // every terminal has an associated name for the "m" variable;
     // because this variable is *free*, rules must never change this variable!
     // (you are free to rename the lineId whatever you want, but try to reuse
@@ -1486,7 +1488,7 @@ function terminalNode(lineId, variable, x, y) {
 }
 
 /** Create a Wigner 3-jm node. */
-function w3jNode(a, b, c, x, y) {
+export function w3jNode(a, b, c, x, y) {
     let node = {
         type: "w3j",
         lines: Object.freeze([a, b, c]),
@@ -1569,7 +1571,7 @@ function nearestNodeIndices(nodes, count, x, y) {
 // Also, the order of nodes is critical!  If you move the nodes around,
 // make sure the lines are also reversed.
 
-const EMPTY_DIAGRAM = Object.freeze({
+export const EMPTY_DIAGRAM = Object.freeze({
     nodes: Object.freeze([]),
     superlines: Object.freeze({}),
     lines: Object.freeze({}),
@@ -1578,7 +1580,7 @@ const EMPTY_DIAGRAM = Object.freeze({
     deltas: Object.freeze([]),
 })
 
-function ensureDiagram(diagram) {
+export function ensureDiagram(diagram) {
     return Object.freeze(Object.assign({}, EMPTY_DIAGRAM, diagram))
 }
 
@@ -2115,7 +2117,7 @@ class DiagramNode {
     }
 }
 
-class Diagram {
+export class Diagram {
     constructor(rawDiagram) {
         this.rawDiagram = Object.freeze(rawDiagram) || EMPTY_DIAGRAM
         this._cache = {}
@@ -5044,11 +5046,9 @@ function getUpdate(editor) {
     }
 }
 
-function main() {
+export function main() {
     let editor = {}
     Object.assign(editor, newEditor())
     const update = getUpdate(editor)
     update(loadEditor)
 }
-
-main()

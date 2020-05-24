@@ -2,21 +2,22 @@ module Diagram where
 import Common
 import Control.Monad.State.Class as State
 import Data.Array as Array
+import Data.Array.NonEmpty as NonEmpty
 import Data.Argonaut.Core as Json
 import Data.Argonaut.Encode.Class (class EncodeJson, encodeJson)
 import Data.Int as Int
 import Data.Map as Map
 import Data.Set as Set
-import Data.StrMap as StrMap
 import Data.String as String
 import Data.String.Regex as Regex
+import Foreign.Object as Object
 import Global as Global
 import Text.Parsing.StringParser (Parser)
 import Text.Parsing.StringParser as P
+import Text.Parsing.StringParser.CodePoints as PS
 import Text.Parsing.StringParser.Combinators ((<?>))
 import Text.Parsing.StringParser.Combinators as PC
 import Text.Parsing.StringParser.Expr as PE
-import Text.Parsing.StringParser.String as PS
 import Partition (Partition)
 import Partition as Partition
 import Utils as U
@@ -84,7 +85,7 @@ instance monoidFactor :: Monoid Factor where
 instance encodeFactor :: EncodeJson Factor where
   encodeJson (Factor x) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "phase" (encodeJson x.phase)
      , Tuple "weight" (encodeJson x.weight)
      ])
@@ -115,7 +116,7 @@ instance showSuperline :: Show Superline where
 instance encodeJsonSuperline :: EncodeJson Superline where
   encodeJson (Superline superline) =
     U.encodeTogether superline.factor
-    (StrMap.singleton "summed" (encodeJson superline.summed))
+    (Object.singleton "summed" (encodeJson superline.summed))
 
 emptySuperline :: Superline
 emptySuperline = Superline { factor: mempty, summed: false }
@@ -225,7 +226,7 @@ instance showLine :: Show Line where
 instance encodeJsonLine :: EncodeJson Line where
   encodeJson (Line {superline, direction}) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "superline" (encodeJson superline)
      , Tuple "direction" (encodeJson direction)
      ])
@@ -349,7 +350,7 @@ instance showLineGeometry :: Show LineGeometry where
 instance encodeJsonLineGeometry :: EncodeJson LineGeometry where
   encodeJson (LineGeometry {arrowPos, arcHeight, angle, textPos, textOffset}) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "arrowPos" (encodeJson arrowPos)
      , Tuple "arcHeight" (encodeJson arcHeight)
      , Tuple "angle" (encodeJson angle)
@@ -408,14 +409,14 @@ instance showNode :: Show Node where
 instance encodeJsonNode :: EncodeJson Node where
   encodeJson (Terminal {line, variable}) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "type" (encodeJson "terminal")
      , Tuple "lines" (encodeJson [line])
      , Tuple "variable" (encodeJson variable)
      ])
   encodeJson (W3j {line1, line2, line3}) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "type" (encodeJson "w3j")
      , Tuple "lines" (encodeJson [line1, line2, line3])
      ])
@@ -451,7 +452,7 @@ instance showNodeGeometry :: Show NodeGeometry where
 instance encodeJsonNodeGeometry :: EncodeJson NodeGeometry where
   encodeJson (NodeGeometry {x, y}) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "x" (encodeJson x)
      , Tuple "y" (encodeJson y)
      ])
@@ -480,10 +481,10 @@ instance showDiagram :: Show Diagram where
 instance encodeJsonDiagram :: EncodeJson Diagram where
   encodeJson unrenamedDiagram =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "nodes" (encodeJson nodes')
      , Tuple "lines" (encodeJson lines')
-     , Tuple "superlines" (encodeJson (unsafeEncodeStrMap diagram.superlines))
+     , Tuple "superlines" (encodeJson (unsafeEncodeObject diagram.superlines))
      , Tuple "deltas"
          (encodeJson
           (Array.fromFoldable <$> Array.fromFoldable
@@ -492,27 +493,27 @@ instance encodeJsonDiagram :: EncodeJson Diagram where
     where
 
       nodes' :: Array Json
-      nodes' = snd <$> StrMap.toAscUnfoldable
+      nodes' = snd <$> Object.toAscUnfoldable
                (unsafeEncodeWithGeometries defaultNodeGeometry
                   diagram.nodeGeometries diagram.nodes)
 
-      lines' :: StrMap Json
+      lines' :: Object Json
       lines' = unsafeEncodeWithGeometries defaultLineGeometry
                  diagram.lineGeometries diagram.lines
 
-      unsafeEncodeStrMap :: forall k a. Ord k => Newtype k String =>
-                            Map k a -> StrMap a
-      unsafeEncodeStrMap m =
-        unsafePartial (U.mapToStrMap (U.mapMapKeys unwrap m))
+      unsafeEncodeObject :: forall k a. Ord k => Newtype k String =>
+                            Map k a -> Object a
+      unsafeEncodeObject m =
+        unsafePartial (U.mapToObject (U.mapMapKeys unwrap m))
 
       unsafeEncodeWithGeometries :: forall k x g.
                                     Ord k =>
                                     Newtype k String =>
                                     EncodeJson x =>
                                     EncodeJson g =>
-                                    g -> Map k g -> Map k x -> StrMap Json
+                                    g -> Map k g -> Map k x -> Object Json
       unsafeEncodeWithGeometries gDefault gs xs =
-        unsafePartial (unsafeEncodeStrMap (Map.mapWithKey encodeWith xs))
+        unsafePartial (unsafeEncodeObject (mapWithIndex encodeWith xs))
         where
           encodeWith k =
             U.encodeTogether (fromMaybe gDefault (gs ^? ix k))
@@ -622,7 +623,7 @@ usedSuperlines diagram =
                mempty diagram
     superlineSuperlines = ifoldrOf diagramSuperlinesed build mempty diagram
     build superlineId superline =
-      if superline == emptySuperline then id else Set.insert superlineId
+      if superline == emptySuperline then identity else Set.insert superlineId
     deltaSuperlines =
       Partition.foldr (Set.insert <<< fst) mempty (diagram ^. diagramDeltas)
 
@@ -646,14 +647,14 @@ directionIx lineRef = lineIx lineRef.id
                       <<< lineDirection
                       <<< if lineRef.reversed
                           then iso reverseDirection reverseDirection
-                          else id
+                          else identity
 
 lineIxRef :: LineRef -> Traversal' Diagram Line
 lineIxRef lineRef =
   lineIx lineRef.id #
   if lineRef.reversed
   then (_ <<< iso reverseLine reverseLine)
-  else id
+  else identity
 
 reverse :: forall r. { reversed :: Boolean | r } -> { reversed :: Boolean | r }
 reverse = prop (SProxy :: SProxy "reversed") %~ not
@@ -693,7 +694,8 @@ primeId = _Newtype %~ (_ <> "'")
 incrementId :: forall i. Newtype i String => i -> i
 incrementId =
   _Newtype %~ \s ->
-    case Regex.match (U.unsafeRegex' """^(.*?)(\d+)$""") s of
+    case NonEmpty.toArray <$>
+           Regex.match (U.unsafeRegex' """^(.*?)(\d+)$""") s of
       Just [_, Just p, Just n'] ->
         case Int.fromString n' of
           Nothing -> unsafeCrashWith "!?"
@@ -784,7 +786,7 @@ renameNodes rename (Diagram diagram) =
     renamedLines = diagram.lines <#> unIndex lineEnds <<< _1 %~ rename
     newLines = canonicalizeLine <$> renamedLines
     newLineGeometries =
-      flip Map.mapWithKey diagram.lineGeometries \lineId ->
+      flip mapWithIndex diagram.lineGeometries \lineId ->
         canonicalizeLineGeometry (renamedLines ^?! ix lineId)
 
 renameLines :: Partial => (LineId -> LineId) -> Diagram -> Diagram
@@ -991,7 +993,7 @@ w3jDiagram :: SuperlineId
               }
 w3jDiagram j1 j2 j3 x y =
   { diagram: diagram # diagramNodeGeometries %~ do
-      id
+      identity
         <<< (at n1 .~ Just (NodeGeometry { x: x - 50.0, y: y + 50.0 }))
         <<< (at n2 .~ Just (NodeGeometry { x: x + 50.0, y: y + 50.0 }))
         <<< (at n3 .~ Just (NodeGeometry { x, y: y - 70.0 }))
@@ -1081,7 +1083,7 @@ derive instance newtypeSnapshot :: Newtype Snapshot _
 instance encodeJsonSnapshot :: EncodeJson Snapshot where
   encodeJson (Snapshot snapshot) =
     encodeJson
-    (StrMap.fromFoldable
+    (Object.fromFoldable
      [ Tuple "diagram" (encodeJson snapshot.diagram)
      , Tuple "frozen" (encodeJson snapshot.frozen)
      , Tuple "showAmbient" (encodeJson snapshot.showAmbient)
@@ -1103,9 +1105,10 @@ newFrozenSnapshot diagram =
   , showAmbient: true
   }
 
-snapshotHash :: Snapshot -> String
+snapshotHash :: Snapshot -> Maybe String
 snapshotHash snapshot =
-  "#" <> Global.encodeURIComponent (Json.stringify (encodeJson snapshot))
+  ("#" <> _) <$>
+    Global.encodeURIComponent (Json.stringify (encodeJson snapshot))
 
 grid :: { x0 :: Number
         , y0 :: Number
@@ -1276,7 +1279,7 @@ constructSubdiagrams exprs =
     let joinSharedTerminals nodeIds =
           case Array.fromFoldable nodeIds of
             [n1, n2] -> (_ >=> joinTerminals n1 n2)
-            _ -> id
+            _ -> identity
     d' <- foldr joinSharedTerminals pure sharedTerminals d
 
     -- remove the J and C prefixes from superlines;
@@ -1324,7 +1327,7 @@ parseToken f = P.try do
     <|> P.fail "did not expect end of input"
   case f t of
     Just x -> pure x
-    Nothing -> P.fail ("did not expect ‘" <> either id id t <> "’")
+    Nothing -> P.fail ("did not expect ‘" <> either identity identity t <> "’")
 
 parseTokenIs :: Either String String -> Parser Unit
 parseTokenIs t = parseToken \s -> if s == t then Just unit else Nothing
@@ -1332,7 +1335,7 @@ parseTokenIs t = parseToken \s -> if s == t then Just unit else Nothing
 unexpectedToken :: forall a. String -> Parser a
 unexpectedToken msg = do
   t <- parseToken Just <?> msg <> " (found end of input)"
-  P.fail (msg <> " (found: ‘" <> either id id t <> "’)")
+  P.fail (msg <> " (found: ‘" <> either identity identity t <> "’)")
 
 parseAngMomentum :: Parser AngMomentum
 parseAngMomentum = fix \p ->
@@ -1376,7 +1379,7 @@ parseOnly p = p <* (PS.eof <?> "trailing garbage")
 
 parseSubdiagrams :: String -> Either String (Array SubdiagramExpr)
 parseSubdiagrams input =
-  bimap show id (for lines (P.runParser (parseOnly parseSubdiagram)))
+  bimap show identity (for lines (P.runParser (parseOnly parseSubdiagram)))
   where
     lines =
       filter
