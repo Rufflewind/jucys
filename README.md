@@ -24,16 +24,17 @@ It’s a client-side web application written in JavaScript that runs entirely in
 
 The implementation makes extensive use of [ES2016](https://en.wikipedia.org/wiki/ECMAScript#7th_Edition_-_ECMAScript_2016) and SVG, so you’ll need a pretty modern browser to run it.  It has been tested on Chromium and Firefox.  It may or may not work on Safari or Edge, and most likely won’t work on IE.  There’s no support for mobile platforms, sorry.  You’ll need a working mouse with a scroll-wheel button (middle button).
 
-If you want to run it on your own computer or web server, you’ll have to build the source code by running `make`.  You’ll need:
+If you want to run it on your own computer or web server, you’ll have to build the source code.  You’ll need:
 
-  - Some flavor of [Make](https://en.wikipedia.org/wiki/Make_(software))
   - [npm](https://npmjs.com)
-  - [Bower](https://bower.io)
   - [Pandoc](https://pandoc.org)
-  - [PureScript](http://purescript.org)
-  - [Pulp](https://github.com/purescript-contrib/pulp)
 
-as well as all the dependencies listed in `package.json` and `tools/bower.json`, which are installed using `npm` and `bower` respectively.  The output is written to the `dist` directory.
+as well as all the dependencies listed in `package.json`, which are installed using `npm install --dev-dependencies`.  The output is written to the `dist` directory.
+
+```shell
+$ npm install --dev-dependencies
+$ npm run build
+```
 
 ## Usage
 

@@ -14,6 +14,7 @@ module.exports = {
     },
     output: {
         path: __dirname + "/dist",
+        publicPath: "auto",
     },
     module: {
         rules: [
@@ -27,8 +28,10 @@ module.exports = {
                             {
                                 loader: "postcss-loader",
                                 options: {
-                                    stringifier: "../../../stringify",
-                                    plugins: [postcssCssVariables],
+                                    postcssOptions: {
+                                        stringifier: "../../../stringify",
+                                        plugins: [postcssCssVariables],
+                                    },
                                 },
                             },
                         ],
@@ -80,6 +83,9 @@ module.exports = {
             },
         ]
     },
+    performance: {
+        hints: false,
+    },
     plugins: [
         new CleanWebpackPlugin(),
         new webpack.DefinePlugin({
@@ -123,7 +129,7 @@ module.exports = {
         new MiniCssExtractPlugin(),
     ],
     devServer: {
-        contentBase: __dirname + "/dist",
+        static: __dirname + "/dist",
     },
     watchOptions: {
         ignored: /\.#/,
